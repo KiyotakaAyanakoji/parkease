@@ -13,12 +13,14 @@ import OperatorDashboard from './screens/OperatorDashboard';
 import OperatorVerification from './screens/OperatorVerification';
 import CheckoutReceipt from './screens/CheckoutReceipt';
 import ArrivalManagement from './screens/ArrivalManagement';
+import LandingPage from './screens/LandingPage';
 
 const ScreenManager = () => {
   const { currentScreen, role, setRole, navigate } = useAppContext();
 
   const renderScreen = () => {
     switch (currentScreen) {
+      case 'LandingPage': return <LandingPage />;
       case 'RoleSelection': return <RoleSelection />;
       case 'DriverDashboard': return <DriverDashboard />;
       case 'ParkingDetails': return <ParkingDetails />;
@@ -30,16 +32,16 @@ const ScreenManager = () => {
       case 'OperatorVerification': return <OperatorVerification />;
       case 'CheckoutReceipt': return <CheckoutReceipt />;
       case 'ArrivalManagement': return <ArrivalManagement />;
-      default: return <RoleSelection />;
+      default: return <LandingPage />;
     }
   };
 
   const handleLogout = () => {
     setRole(null);
-    navigate('RoleSelection');
+    navigate('LandingPage');
   };
 
-  if (!role || currentScreen === 'RoleSelection') {
+  if (!role || currentScreen === 'RoleSelection' || currentScreen === 'LandingPage') {
     return <div className="app-container fade-in">{renderScreen()}</div>;
   }
 

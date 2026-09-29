@@ -70,7 +70,7 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [role, setRole] = useState(null); // 'driver', 'operator'
-  const [currentScreen, setCurrentScreen] = useState('RoleSelection');
+  const [currentScreen, setCurrentScreen] = useState('LandingPage');
   const [screenProps, setScreenProps] = useState({});
   
   const [parkingLots] = useState(initialParkingLots);
