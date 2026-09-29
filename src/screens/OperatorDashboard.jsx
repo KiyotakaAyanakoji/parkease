@@ -89,7 +89,7 @@ export default function OperatorDashboard() {
                 <tr><td colSpan="5" className="p-4 text-center text-muted">No active reservations for this lot.</td></tr>
               ) : (
                 lotBookings.map(booking => (
-                  <tr key={booking.id} className="border-b border-border last:border-0 hover:bg-mint/30">
+                  <tr key={booking.id} className="border-b border-border last:border-0 hover-bg-mint transition-colors">
                     <td className="p-4 font-medium">{booking.id}</td>
                     <td className="p-4">{slots.find(s => s.id === booking.slotId)?.label}</td>
                     <td className="p-4">{new Date(booking.expectedArrival).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>

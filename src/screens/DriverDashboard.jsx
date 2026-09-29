@@ -28,16 +28,31 @@ export default function DriverDashboard() {
         <p className="text-muted">Find a space that works for your plans.</p>
       </div>
 
-      <div className="card mb-8 p-4 flex items-center gap-3">
-        <Search className="text-muted" size={20} />
-        <input 
-          type="text" 
-          placeholder="Search by location or parking lot..."
-          className="form-input border-none shadow-none p-0 focus:box-shadow-none"
-          style={{boxShadow: 'none'}}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <div className="bg-white border border-border rounded-xl p-2 mb-8 shadow-sm flex flex-col md:flex-row gap-2">
+        <div className="flex-1 flex items-center gap-3 px-4 py-2 border-b md:border-b-0 md:border-r border-border">
+          <Search className="text-primary" size={20} />
+          <input 
+            type="text" 
+            placeholder="Search location..."
+            className="w-full border-none outline-none text-charcoal bg-transparent placeholder-muted font-medium"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-3 px-4 py-2 border-b md:border-b-0 md:border-r border-border min-w-[180px]">
+          <Clock className="text-primary" size={20} />
+          <div className="flex flex-col">
+            <span className="text-xs text-muted font-medium uppercase">Arriving</span>
+            <span className="text-sm font-semibold text-charcoal">Today, 2:00 PM</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 px-4 py-2 min-w-[160px]">
+          <Navigation className="text-primary" size={20} />
+          <div className="flex flex-col">
+            <span className="text-xs text-muted font-medium uppercase">Vehicle</span>
+            <span className="text-sm font-semibold text-charcoal">MH-01-AB-1234</span>
+          </div>
+        </div>
       </div>
 
       {activeBookings.length > 0 && (
