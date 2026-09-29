@@ -2,7 +2,8 @@ import React from 'react';
 import { AppProvider, useAppContext } from './context/AppContext';
 import { Car, User, Settings, LogOut, Menu } from 'lucide-react';
 
-import RoleSelection from './screens/RoleSelection';
+import Login from './screens/Login';
+import Signup from './screens/Signup';
 import DriverDashboard from './screens/DriverDashboard';
 import ParkingDetails from './screens/ParkingDetails';
 import ReservationForm from './screens/ReservationForm';
@@ -21,7 +22,8 @@ const ScreenManager = () => {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'LandingPage': return <LandingPage />;
-      case 'RoleSelection': return <RoleSelection />;
+      case 'Login': return <Login />;
+      case 'Signup': return <Signup />;
       case 'DriverDashboard': return <DriverDashboard />;
       case 'ParkingDetails': return <ParkingDetails />;
       case 'ReservationForm': return <ReservationForm />;
@@ -41,7 +43,7 @@ const ScreenManager = () => {
     navigate('LandingPage');
   };
 
-  if (!role || currentScreen === 'RoleSelection' || currentScreen === 'LandingPage') {
+  if (!role || currentScreen === 'Login' || currentScreen === 'Signup' || currentScreen === 'LandingPage') {
     return <div className="app-container fade-in">{renderScreen()}</div>;
   }
 

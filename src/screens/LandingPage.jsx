@@ -61,7 +61,7 @@ export default function LandingPage() {
           </a>
           <button 
             className="text-forest hover-text-primary transition-colors"
-            onClick={() => navigate('RoleSelection')}
+            onClick={() => navigate('Login')}
           >
             Log in
           </button>
@@ -69,7 +69,7 @@ export default function LandingPage() {
         
         <button 
           className="btn btn-primary"
-          onClick={() => navigate('RoleSelection')}
+          onClick={() => navigate('Login')}
         >
           Find parking
         </button>
@@ -114,7 +114,7 @@ export default function LandingPage() {
               className="lp-buttons"
             >
               <button 
-                onClick={() => navigate('RoleSelection')}
+                onClick={() => navigate('Login')}
                 className="btn btn-primary text-base px-8 py-4 shadow-lg hover-shadow-xl hover-translate-y transition-all"
               >
                 Find parking
@@ -265,7 +265,7 @@ export default function LandingPage() {
             </p>
             <button 
               className="btn btn-outline border-border text-forest group transition-all"
-              onClick={() => navigate('RoleSelection')}
+              onClick={() => navigate('Login')}
             >
               Enter Operator Portal
               <ArrowRight size={16} className="ml-2 inline-block transition-transform group-hover-translate-x" />
@@ -318,7 +318,7 @@ export default function LandingPage() {
             <button 
               className="bg-white text-forest px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover-translate-y transition-all inline-flex items-center gap-2 mx-auto"
               style={{ display: 'inline-flex', justifyContent: 'center' }}
-              onClick={() => navigate('RoleSelection')}
+              onClick={() => navigate('Signup')}
             >
               Find parking now
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
