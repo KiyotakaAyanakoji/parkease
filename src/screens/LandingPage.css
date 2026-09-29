@@ -1,3 +1,12 @@
+.lp-wrapper {
+  background-color: var(--color-offwhite);
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  color: var(--color-forest);
+  overflow-x: hidden;
+  width: 100%;
+}
+
 .lp-container {
   width: 100%;
   max-width: 1200px;
@@ -7,6 +16,7 @@
 
 .lp-section {
   padding: 96px 0;
+  width: 100%;
 }
 
 .lp-hero {
@@ -14,6 +24,7 @@
   display: flex;
   align-items: center;
   padding-top: 80px;
+  width: 100%;
 }
 
 .lp-grid-2 {
@@ -21,6 +32,7 @@
   grid-template-columns: 1fr;
   gap: 48px;
   align-items: center;
+  width: 100%;
 }
 
 @media (min-width: 768px) {
@@ -34,11 +46,12 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 32px;
+  width: 100%;
 }
 
 @media (min-width: 768px) {
   .lp-grid-3 {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }
 
@@ -47,6 +60,7 @@
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
+  width: 100%;
 }
 
 .lp-hero-visual {
@@ -83,6 +97,7 @@
   background: rgba(250, 251, 246, 0.8);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border);
+  width: 100%;
 }
 
 .lp-nav-links {
@@ -104,6 +119,7 @@
   flex-direction: column;
   gap: 16px;
   width: 100%;
+  margin-top: 32px;
 }
 
 @media (min-width: 640px) {
@@ -123,6 +139,7 @@
   border-radius: 16px;
   transition: border-color 0.2s;
   border: 1px solid transparent;
+  width: 100%;
 }
 
 .lp-step-card:hover {
@@ -133,6 +150,7 @@
   background-color: var(--color-white);
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
+  width: 100%;
 }
 
 .lp-benefits-visual {
@@ -145,6 +163,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  width: 100%;
 }
 
 .lp-final-cta {
@@ -155,6 +174,8 @@
   text-align: center;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  margin: 0 auto;
 }
 
 @media (min-width: 768px) {
@@ -169,6 +190,7 @@
   padding: 16px;
   box-shadow: 0 25px 50px -12px rgba(24, 61, 43, 0.25);
   position: relative;
+  width: 100%;
 }
 
 @media (min-width: 768px) {

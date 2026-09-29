@@ -4,7 +4,6 @@ import { Car, MapPin, Search, ArrowRight, ShieldCheck, Clock, Navigation } from 
 import { useAppContext } from '../context/AppContext';
 import './LandingPage.css';
 
-// Reusable scroll reveal component
 const Reveal = ({ children, delay = 0, y = 20, className = "", style = {} }) => (
   <motion.div
     initial={{ opacity: 0, y }}
@@ -12,7 +11,7 @@ const Reveal = ({ children, delay = 0, y = 20, className = "", style = {} }) => 
     viewport={{ once: true, margin: "-50px" }}
     transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
     className={className}
-    style={style}
+    style={{ ...style, width: '100%' }}
   >
     {children}
   </motion.div>
@@ -22,13 +21,11 @@ export default function LandingPage() {
   const { navigate } = useAppContext();
   const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
   
-  // Track cursor for hero effects
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
     };
     
-    // Only track if not touching
     if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
       window.addEventListener('mousemove', handleMouseMove);
     }
@@ -37,7 +34,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div className="bg-offwhite min-h-screen font-sans text-forest overflow-hidden selection:bg-mint selection:text-forest">
+    <div className="lp-wrapper">
       
       {/* Navigation */}
       <motion.nav 
@@ -80,7 +77,6 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="lp-hero relative">
-        {/* Cursor Reactive Light */}
         <div 
           className="pointer-events-none fixed top-0 left-0 w-full h-full z-0 overflow-hidden mix-blend-multiply opacity-50 transition-opacity duration-1000"
           style={{
@@ -96,7 +92,7 @@ export default function LandingPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="text-5xl md-text-7xl font-bold tracking-tight text-forest mb-6"
-              style={{ lineHeight: 1.1 }}
+              style={{ lineHeight: 1.1, width: '100%' }}
             >
               Your parking spot.<br/>
               <span className="text-primary">Ready when you are.</span>
@@ -133,17 +129,15 @@ export default function LandingPage() {
           </div>
           
           <motion.div 
-            initial={{ opacity: 0, clipPath: "inset(10% 10% 10% 10% round 24px)" }}
-            animate={{ opacity: 1, clipPath: "inset(0% 0% 0% 0% round 24px)" }}
-            transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-            className="lp-hero-visual"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.0, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            className="lp-hero-visual relative"
           >
-            {/* Ambient decorative background layers */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-mint rounded-full opacity-70 pointer-events-none" style={{ filter: 'blur(80px)', transform: 'translate(25%, -50%)' }}></div>
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-lime rounded-full opacity-40 pointer-events-none" style={{ filter: 'blur(80px)', transform: 'translate(-25%, 50%)' }}></div>
             
-            {/* Visual content representing the product */}
-            <div className="relative z-10 w-full rounded-2xl p-4 border border-white flex flex-col gap-3 backdrop-blur-sm" style={{ backgroundColor: 'rgba(250, 251, 246, 0.8)' }}>
+            <div className="relative z-10 w-full rounded-2xl p-4 flex flex-col gap-3 backdrop-blur-sm shadow-sm" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)' }}>
               <div className="flex justify-between items-center pb-2 border-b border-border">
                 <div className="flex items-center gap-2">
                   <MapPin size={16} className="text-primary"/>
@@ -163,18 +157,7 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <motion.div 
-              animate={{ 
-                y: [0, -8, 0],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="relative z-10 bg-primary text-white rounded-2xl p-4 shadow-xl flex flex-col gap-2 mt-auto"
-              style={{ width: '85%', marginLeft: 'auto' }}
-            >
+            <div className="relative z-10 bg-primary text-white rounded-2xl p-4 shadow-xl flex flex-col gap-2 mt-auto" style={{ width: '85%', marginLeft: 'auto' }}>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-xs uppercase tracking-widest font-medium" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>Reserved</span>
                 <CheckCircleIcon />
@@ -183,25 +166,21 @@ export default function LandingPage() {
               <div className="w-full h-1 rounded-full mt-1 overflow-hidden" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
                 <div className="h-full bg-white rounded-full" style={{ width: '70%' }}></div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* How It Works (Scroll Storytelling) */}
+      {/* How It Works */}
       <section id="how-it-works" className="lp-section lp-container">
         <Reveal>
-          <div className="mb-16 text-center max-w-2xl mx-auto">
+          <div className="mb-16 text-center max-w-2xl mx-auto w-full">
             <h2 className="text-4xl md-text-5xl font-bold mb-4 tracking-tight">The city moves.<br/>Your parking is already planned.</h2>
             <p className="text-lg text-muted">A seamless experience from finding a spot to arriving with confidence.</p>
           </div>
         </Reveal>
 
-        <div className="lp-grid-3 relative">
-          <div className="hidden md:block absolute top-12 left-1/6 right-1/6 h-[2px] bg-border z-0" style={{ left: '16.66%', right: '16.66%', display: 'none' }}>
-             {/* Note: I'm hiding the line for cleaner mobile/tablet layout since it breaks often without strict grid. */}
-          </div>
-          
+        <div className="lp-grid-3 relative w-full">
           {[
             { step: 1, title: "Find", desc: "Explore available parking options and verify real-time availability before you head out.", icon: <Search size={24}/> },
             { step: 2, title: "Reserve", desc: "Choose a suitable slot, select your expected arrival time, and reserve it instantly.", icon: <MapPin size={24}/> },
@@ -222,15 +201,11 @@ export default function LandingPage() {
       {/* Benefits Section */}
       <section className="lp-benefits lp-section">
         <div className="lp-container lp-grid-2">
-          <Reveal className="relative" style={{ order: 2 }}>
+          <Reveal className="w-full relative" style={{ order: 2 }}>
             <div className="lp-benefits-visual">
               <div className="absolute inset-0 bg-gradient-tr pointer-events-none"></div>
               
-              <motion.div 
-                whileHover={{ scale: 1.02, rotate: -1 }}
-                className="bg-white p-6 rounded-2xl shadow-lg border border-border z-10 relative"
-                style={{ width: '85%' }}
-              >
+              <div className="bg-white p-6 rounded-2xl shadow-lg border border-border z-10 relative mb-8" style={{ width: '85%' }}>
                 <div className="flex gap-4 items-center mb-4 pb-4 border-b border-border">
                   <div className="w-12 h-12 rounded-full bg-sage flex items-center justify-center text-primary">
                     <Clock size={20} />
@@ -243,15 +218,9 @@ export default function LandingPage() {
                 <button className="w-full py-3 bg-primary text-white rounded-xl text-sm font-semibold transition-colors">
                   Request Extension
                 </button>
-              </motion.div>
+              </div>
               
-              <motion.div 
-                initial={{ y: 20 }}
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="bg-offwhite p-5 rounded-2xl shadow-xl border border-border absolute z-20"
-                style={{ width: '80%', bottom: '32px', right: '32px' }}
-              >
+              <div className="bg-offwhite p-5 rounded-2xl shadow-xl border border-border absolute z-20" style={{ width: '80%', bottom: '32px', right: '32px' }}>
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-semibold">Check-in confirmed</span>
                   <ShieldCheck size={18} className="text-primary"/>
@@ -259,11 +228,11 @@ export default function LandingPage() {
                 <div className="h-2 w-full bg-border rounded-full overflow-hidden">
                   <div className="h-full bg-primary w-full"></div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </Reveal>
           
-          <Reveal style={{ order: 1 }}>
+          <Reveal className="w-full" style={{ order: 1 }}>
             <h2 className="text-4xl md-text-5xl font-bold mb-6 tracking-tight">Focus on the destination.</h2>
             <div className="space-y-6">
               <p className="text-lg text-muted leading-relaxed">
@@ -287,7 +256,7 @@ export default function LandingPage() {
       {/* Operator Section */}
       <section id="for-operators" className="lp-section lp-container">
         <div className="lp-grid-2">
-          <Reveal>
+          <Reveal className="w-full">
             <span className="text-sm font-semibold tracking-widest uppercase text-primary mb-4 block">For Operators</span>
             <h2 className="text-4xl md-text-5xl font-bold mb-6 tracking-tight">Full visibility.<br/>Total control.</h2>
             <p className="text-lg text-muted leading-relaxed mb-8">
@@ -303,7 +272,7 @@ export default function LandingPage() {
             </button>
           </Reveal>
           
-          <Reveal delay={0.2}>
+          <Reveal delay={0.2} className="w-full">
             <div className="lp-operator-visual">
               <div className="absolute top-0 right-10 w-32 h-32 rounded-full pointer-events-none" style={{ backgroundColor: 'rgba(39, 155, 105, 0.3)', filter: 'blur(50px)' }}></div>
               
@@ -341,14 +310,14 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section className="lp-section lp-container">
         <Reveal className="lp-final-cta">
-          <div className="absolute top-0 rounded-full pointer-events-none" style={{ left: '25%', width: '500px', height: '500px', backgroundColor: 'rgba(39, 155, 105, 0.4)', filter: 'blur(100px)', transform: 'translateY(-50%)' }}></div>
           <div className="relative z-10">
             <h2 className="text-4xl md-text-6xl font-bold mb-6 tracking-tight">Ready to park easier?</h2>
             <p className="text-xl mb-10 max-w-2xl mx-auto" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
               Skip the search. Reserve your spot today and experience parking as it should be.
             </p>
             <button 
-              className="bg-white text-forest hover-bg-mint px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover-shadow-xl hover-translate-y transition-all inline-flex items-center gap-2"
+              className="bg-white text-forest px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover-translate-y transition-all inline-flex items-center gap-2 mx-auto"
+              style={{ display: 'inline-flex', justifyContent: 'center' }}
               onClick={() => navigate('RoleSelection')}
             >
               Find parking now
