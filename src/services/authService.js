@@ -2,7 +2,7 @@
 // API integration structure for backend authentication.
 // Currently points to backend endpoints that need to be implemented.
 
-const API_BASE = '/api/auth';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/auth';
 
 export const authService = {
   /**
@@ -15,7 +15,8 @@ export const authService = {
     const response = await fetch(`${API_BASE}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
+      credentials: 'include'
     });
     
     if (!response.ok) {
@@ -34,7 +35,8 @@ export const authService = {
     const response = await fetch(`${API_BASE}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
+      body: JSON.stringify(userData),
+      credentials: 'include'
     });
     
     if (!response.ok) {
@@ -49,7 +51,9 @@ export const authService = {
    * Fetch current user session
    */
   async getCurrentUser() {
-    const response = await fetch(`${API_BASE}/me`);
+    const response = await fetch(`${API_BASE}/me`, {
+      credentials: 'include'
+    });
     if (!response.ok) {
       throw new Error('Not authenticated');
     }
@@ -60,6 +64,9 @@ export const authService = {
    * Logout current user
    */
   async logout() {
-    await fetch(`${API_BASE}/logout`, { method: 'POST' }).catch(console.error);
+    await fetch(`${API_BASE}/logout`, { 
+      method: 'POST',
+      credentials: 'include'
+    }).catch(console.error);
   }
 };

@@ -1,126 +1,147 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Car, Clock, LogIn, LogOut, CheckCircle } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
-import { Activity, Car, CheckCircle, Clock } from 'lucide-react';
 
 export default function OperatorDashboard() {
-  const { parkingLots, slots, bookings, navigate } = useAppContext();
-  const [selectedLotId, setSelectedLotId] = useState(parkingLots[0].id);
+  const { navigate, role, user } = useAppContext();
+  const [stats, setStats] = useState({ total: 0, available: 0, occupied: 0, active_reservations: 0 });
+  const [facilities, setFacilities] = useState([]);
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const lotSlots = slots.filter(s => s.lotId === selectedLotId);
-  const totalSlots = lotSlots.length;
-  const occupiedSlots = lotSlots.filter(s => s.status === 'occupied').length;
-  const reservedSlots = lotSlots.filter(s => s.status === 'reserved').length;
-  const availableSlots = lotSlots.filter(s => s.status === 'available').length;
-  
-  const occupancyPercentage = ((occupiedSlots + reservedSlots) / totalSlots) * 100;
+  const fetchData = async () => {
+    try {
+      const opts = { credentials: 'include' };
+      const [resOverview, resRes] = await Promise.all([
+        fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/operator/overview', opts),
+        fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/operator/reservations', opts)
+      ]);
+      
+      if (resOverview.ok && resRes.ok) {
+        const overviewData = await resOverview.json();
+        setStats(overviewData.stats);
+        setFacilities(overviewData.facilities);
+        setReservations(await resRes.json());
+      } else {
+        setError('Failed to load data. Are you assigned to a facility?');
+      }
+    } catch (e) {
+      console.error(e);
+      setError('Connection failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const lotBookings = bookings.filter(b => b.lotId === selectedLotId && ['reserved', 'checked-in', 'awaiting-response', 'confirmed-late'].includes(b.status));
+  useEffect(() => {
+    if (role !== 'OPERATOR') {
+      navigate('Login');
+      return;
+    }
+    fetchData();
+  }, [role, navigate]);
+
+  const handleAction = async (bookingId, action) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/operator/${action}/${bookingId}`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+      fetchData(); // refresh on success
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  if (loading) return <div className="p-8 text-forest">Loading Operator Dashboard...</div>;
+  if (facilities.length === 0) return <div className="p-8 text-red-600 font-bold">You are not assigned to any facilities. Please contact an admin.</div>;
 
   return (
-    <div className="fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-forest">Parking Overview</h2>
-          <p className="text-muted">Monitor occupancy and expected arrivals.</p>
-        </div>
-        <select 
-          className="form-select w-auto min-w-[200px]"
-          value={selectedLotId}
-          onChange={(e) => setSelectedLotId(e.target.value)}
-        >
-          {parkingLots.map(lot => (
-            <option key={lot.id} value={lot.id}>{lot.name}</option>
-          ))}
-        </select>
-      </div>
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-2xl font-bold text-forest mb-2">Welcome, {user?.name}</h1>
+      <p className="text-muted mb-8">Managing: {facilities.map(f => f.name).join(', ')}</p>
 
-      <div className="grid gap-4 md:grid-cols-4 mb-8">
-        <div className="card text-center p-4">
-          <span className="text-sm text-muted">Total Slots</span>
-          <span className="block text-2xl font-bold text-forest mt-1">{totalSlots}</span>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted font-medium mb-1">Total Capacity</p>
+            <p className="text-3xl font-bold text-forest">{stats.total}</p>
+          </div>
+          <Car className="text-primary opacity-50" size={32} />
         </div>
-        <div className="card text-center p-4 border-l-4" style={{borderLeftColor: 'var(--color-primary)'}}>
-          <span className="text-sm text-muted">Available</span>
-          <span className="block text-2xl font-bold text-primary mt-1">{availableSlots}</span>
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted font-medium mb-1">Available</p>
+            <p className="text-3xl font-bold text-mint">{stats.available}</p>
+          </div>
+          <CheckCircle className="text-mint opacity-50" size={32} />
         </div>
-        <div className="card text-center p-4">
-          <span className="text-sm text-muted">Occupied</span>
-          <span className="block text-2xl font-bold text-charcoal mt-1">{occupiedSlots}</span>
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted font-medium mb-1">Occupied</p>
+            <p className="text-3xl font-bold text-amber-500">{stats.occupied}</p>
+          </div>
+          <Car className="text-amber-500 opacity-50" size={32} />
         </div>
-        <div className="card text-center p-4">
-          <span className="text-sm text-muted">Reserved</span>
-          <span className="block text-2xl font-bold text-warning mt-1">{reservedSlots}</span>
-        </div>
-      </div>
-
-      <div className="card mb-8 p-6">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="font-semibold text-forest">Occupancy</h3>
-          <span className="text-sm font-medium">{Math.round(occupancyPercentage)}%</span>
-        </div>
-        <div className="w-full h-3 bg-offwhite rounded-full overflow-hidden flex">
-          <div className="h-full bg-charcoal" style={{width: `${(occupiedSlots/totalSlots)*100}%`}}></div>
-          <div className="h-full bg-warning opacity-80" style={{width: `${(reservedSlots/totalSlots)*100}%`}}></div>
-        </div>
-        <div className="flex gap-4 mt-3 text-xs text-muted">
-          <span className="flex items-center gap-1"><div className="w-3 h-3 bg-charcoal rounded-sm"></div> Occupied</span>
-          <span className="flex items-center gap-1"><div className="w-3 h-3 bg-warning opacity-80 rounded-sm"></div> Reserved</span>
+        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted font-medium mb-1">Active Bookings</p>
+            <p className="text-3xl font-bold text-blue-500">{stats.active_reservations}</p>
+          </div>
+          <Clock className="text-blue-500 opacity-50" size={32} />
         </div>
       </div>
 
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-forest">Current Reservations</h3>
-      </div>
-
-      <div className="card p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-offwhite border-b border-border">
-              <tr>
-                <th className="p-4 font-semibold text-forest">Ref</th>
-                <th className="p-4 font-semibold text-forest">Slot</th>
-                <th className="p-4 font-semibold text-forest">Arrival</th>
-                <th className="p-4 font-semibold text-forest">Status</th>
-                <th className="p-4 font-semibold text-forest">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lotBookings.length === 0 ? (
-                <tr><td colSpan="5" className="p-4 text-center text-muted">No active reservations for this lot.</td></tr>
-              ) : (
-                lotBookings.map(booking => (
-                  <tr key={booking.id} className="border-b border-border last:border-0 hover-bg-mint transition-colors">
-                    <td className="p-4 font-medium">{booking.id}</td>
-                    <td className="p-4">{slots.find(s => s.id === booking.slotId)?.label}</td>
-                    <td className="p-4">{new Date(booking.expectedArrival).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
-                    <td className="p-4">
-                      <span className={`badge ${booking.status === 'checked-in' ? 'badge-success' : 'badge-neutral'}`}>
-                        {booking.status.replace('-', ' ')}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      {booking.status === 'checked-in' ? (
-                        <button 
-                          className="text-primary font-medium hover:underline"
-                          onClick={() => navigate('CheckoutReceipt', { bookingId: booking.id })}
-                        >
-                          Checkout
-                        </button>
-                      ) : (
-                        <button 
-                          className="text-primary font-medium hover:underline"
-                          onClick={() => navigate('OperatorVerification', { prefillId: booking.id })}
-                        >
-                          Verify
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-border bg-offwhite">
+          <h2 className="font-semibold text-forest">Today's Reservations</h2>
         </div>
+        <table className="w-full text-left">
+          <thead className="bg-sage text-forest text-sm">
+            <tr>
+              <th className="p-4 font-medium">Ref</th>
+              <th className="p-4 font-medium">Vehicle</th>
+              <th className="p-4 font-medium">Slot</th>
+              <th className="p-4 font-medium">Arrival</th>
+              <th className="p-4 font-medium">Status</th>
+              <th className="p-4 font-medium">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reservations.length === 0 ? (
+              <tr><td colSpan="6" className="p-8 text-center text-muted">No reservations found for your facilities.</td></tr>
+            ) : (
+              reservations.map(r => (
+                <tr key={r.id} className="border-t border-border hover:bg-offwhite">
+                  <td className="p-4 font-medium text-xs">{r.id.split('-').pop()}</td>
+                  <td className="p-4 font-bold">{r.vehicle_reg}</td>
+                  <td className="p-4 text-muted">{r.slot_code}</td>
+                  <td className="p-4 text-muted">{new Date(r.expected_arrival).toLocaleTimeString()}</td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 text-xs rounded-full ${r.status === 'RESERVED' ? 'bg-blue-100 text-blue-800' : r.status === 'CHECKED_IN' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100'}`}>
+                      {r.status}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    {r.status === 'RESERVED' && (
+                      <button onClick={() => handleAction(r.id, 'checkin')} className="btn btn-primary text-xs flex gap-1 items-center px-3 py-1">
+                        <LogIn size={14} /> Check In
+                      </button>
+                    )}
+                    {r.status === 'CHECKED_IN' && (
+                      <button onClick={() => handleAction(r.id, 'checkout')} className="bg-amber-500 text-white rounded-md text-xs font-medium flex gap-1 items-center px-3 py-2">
+                        <LogOut size={14} /> Check Out
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

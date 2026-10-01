@@ -66,16 +66,45 @@ const initializeSlots = (slots, bookings) => {
   });
 };
 
+import { authService } from '../services/authService';
+
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [role, setRole] = useState(null); // 'driver', 'operator'
+  const [role, setRole] = useState(null); // 'DRIVER', 'OPERATOR', 'ADMIN'
+  const [user, setUser] = useState(null);
   const [currentScreen, setCurrentScreen] = useState('LandingPage');
   const [screenProps, setScreenProps] = useState({});
+  const [authLoading, setAuthLoading] = useState(true);
   
   const [parkingLots] = useState(initialParkingLots);
   const [slots, setSlots] = useState(initializeSlots(initialSlots, initialBookings));
   const [bookings, setBookings] = useState(initialBookings);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const data = await authService.getCurrentUser();
+        setUser(data.user);
+        setRole(data.user.role);
+        
+        // Setup initial route based on role if they were on a public page
+        const publicPages = ['LandingPage', 'Login', 'Signup'];
+        if (publicPages.includes(currentScreen)) {
+          let targetScreen = 'DriverDashboard';
+          if (data.user.role === 'ADMIN') targetScreen = 'AdminDashboard';
+          else if (data.user.role === 'OPERATOR') targetScreen = 'OperatorDashboard';
+          setCurrentScreen(targetScreen);
+        }
+      } catch (err) {
+        setRole(null);
+        setUser(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+    initAuth();
+  }, []);
 
   const navigate = (screenName, props = {}) => {
     setCurrentScreen(screenName);
@@ -111,7 +140,7 @@ export const AppProvider = ({ children }) => {
 
   return (
     <AppContext.Provider value={{
-      role, setRole,
+      role, setRole, user, setUser, authLoading,
       currentScreen, navigate, screenProps,
       parkingLots, slots, bookings,
       createBooking, updateBookingStatus

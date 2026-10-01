@@ -110,7 +110,7 @@ export default function Signup() {
                 id="email"
                 type="email" 
                 className="auth-input"
-                placeholder="name@example.com"
+                placeholder="name@parkease.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"

@@ -11,13 +11,16 @@ import BookingConfirmation from './screens/BookingConfirmation';
 import MyBookings from './screens/MyBookings';
 
 import OperatorDashboard from './screens/OperatorDashboard';
-import OperatorVerification from './screens/OperatorVerification';
-import CheckoutReceipt from './screens/CheckoutReceipt';
-import ArrivalManagement from './screens/ArrivalManagement';
+import OperatorFacilities from './screens/OperatorFacilities';
+import OperatorActivityLogs from './screens/OperatorActivityLogs';
+import AdminDashboard from './screens/AdminDashboard';
+import AdminFacilities from './screens/AdminFacilities';
+import AdminSlots from './screens/AdminSlots';
+import AdminOperators from './screens/AdminOperators';
 import LandingPage from './screens/LandingPage';
 
 const ScreenManager = () => {
-  const { currentScreen, role, setRole, navigate } = useAppContext();
+  const { currentScreen, role, setRole, navigate, authLoading, user } = useAppContext();
 
   const renderScreen = () => {
     switch (currentScreen) {
@@ -31,17 +34,37 @@ const ScreenManager = () => {
       case 'MyBookings': return <MyBookings />;
       
       case 'OperatorDashboard': return <OperatorDashboard />;
-      case 'OperatorVerification': return <OperatorVerification />;
-      case 'CheckoutReceipt': return <CheckoutReceipt />;
-      case 'ArrivalManagement': return <ArrivalManagement />;
+      case 'OperatorFacilities': return <OperatorFacilities />;
+      case 'OperatorActivityLogs': return <OperatorActivityLogs />;
+      case 'AdminDashboard': return <AdminDashboard />;
+      case 'AdminFacilities': return <AdminFacilities />;
+      case 'AdminSlots': return <AdminSlots />;
+      case 'AdminOperators': return <AdminOperators />;
       default: return <LandingPage />;
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      const { authService } = await import('./services/authService');
+      await authService.logout();
+    } catch(e) {
+      console.error(e);
+    }
     setRole(null);
     navigate('LandingPage');
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-offwhite text-forest">
+        <div className="animate-pulse flex flex-col items-center">
+          <Car size={32} className="text-primary mb-4" />
+          <p>Loading ParkEase...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!role || currentScreen === 'Login' || currentScreen === 'Signup' || currentScreen === 'LandingPage') {
     return <div className="app-container fade-in">{renderScreen()}</div>;
@@ -56,7 +79,38 @@ const ScreenManager = () => {
         </div>
         
         <nav className="flex flex-col gap-2 mt-4 flex-1">
-          {role === 'driver' ? (
+          {role === 'ADMIN' ? (
+            <>
+              <button 
+                onClick={() => navigate('AdminDashboard')}
+                className={`btn ${currentScreen === 'AdminDashboard' ? 'btn-primary' : 'btn-ghost text-white'}`}
+                style={{justifyContent: 'flex-start'}}
+              >
+                Admin Overview
+              </button>
+              <button 
+                onClick={() => navigate('AdminFacilities')}
+                className={`btn ${currentScreen === 'AdminFacilities' ? 'btn-primary' : 'btn-ghost text-white'}`}
+                style={{justifyContent: 'flex-start'}}
+              >
+                Facilities
+              </button>
+              <button 
+                onClick={() => navigate('AdminSlots')}
+                className={`btn ${currentScreen === 'AdminSlots' ? 'btn-primary' : 'btn-ghost text-white'}`}
+                style={{justifyContent: 'flex-start'}}
+              >
+                Parking Slots
+              </button>
+              <button 
+                onClick={() => navigate('AdminOperators')}
+                className={`btn ${currentScreen === 'AdminOperators' ? 'btn-primary' : 'btn-ghost text-white'}`}
+                style={{justifyContent: 'flex-start'}}
+              >
+                Operators
+              </button>
+            </>
+          ) : role === 'DRIVER' ? (
             <>
               <button 
                 onClick={() => navigate('DriverDashboard')}
@@ -83,18 +137,18 @@ const ScreenManager = () => {
                 Overview
               </button>
               <button 
-                onClick={() => navigate('OperatorVerification')}
-                className={`btn ${currentScreen === 'OperatorVerification' ? 'btn-primary' : 'btn-ghost text-white'}`}
+                onClick={() => navigate('OperatorFacilities')}
+                className={`btn ${currentScreen === 'OperatorFacilities' ? 'btn-primary' : 'btn-ghost text-white'}`}
                 style={{justifyContent: 'flex-start'}}
               >
-                Verify & Check-in
+                My Facilities
               </button>
               <button 
-                onClick={() => navigate('ArrivalManagement')}
-                className={`btn ${currentScreen === 'ArrivalManagement' ? 'btn-primary' : 'btn-ghost text-white'}`}
+                onClick={() => navigate('OperatorActivityLogs')}
+                className={`btn ${currentScreen === 'OperatorActivityLogs' ? 'btn-primary' : 'btn-ghost text-white'}`}
                 style={{justifyContent: 'flex-start'}}
               >
-                Arrival Management
+                Activity Logs
               </button>
             </>
           )}
@@ -119,15 +173,15 @@ const ScreenManager = () => {
               <Menu size={24} />
             </button>
             <h1 className="text-xl font-semibold text-forest hidden md:block">
-              {role === 'driver' ? 'Driver Portal' : 'Operator Portal'}
+              {role === 'ADMIN' ? 'Admin Portal' : role === 'OPERATOR' ? 'Operator Portal' : 'Driver Portal'}
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-mint flex items-center justify-center text-primary font-semibold">
-              <User size={16} />
+            <div className="w-8 h-8 rounded-full bg-mint flex items-center justify-center text-primary font-semibold uppercase">
+              {user?.name?.[0] || <User size={16} />}
             </div>
             <span className="text-sm font-medium hidden md:block">
-              {role === 'driver' ? 'Demo Driver' : 'Demo Operator'}
+              {user?.name || (role === 'ADMIN' ? 'Admin' : role === 'OPERATOR' ? 'Operator' : 'Driver')}
             </span>
           </div>
         </header>

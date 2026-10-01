@@ -28,7 +28,10 @@ export default function Login() {
       const result = await authService.login(email, password);
       // Success - redirect based on role
       setRole(result.role);
-      navigate(result.role === 'operator' ? 'OperatorDashboard' : 'DriverDashboard');
+      let targetScreen = 'DriverDashboard';
+      if (result.role === 'ADMIN' || result.role === 'admin') targetScreen = 'AdminDashboard';
+      else if (result.role === 'OPERATOR' || result.role === 'operator') targetScreen = 'OperatorDashboard';
+      navigate(targetScreen);
     } catch (err) {
       setError(err.message || 'Failed to sign in.');
     } finally {
@@ -76,7 +79,7 @@ export default function Login() {
                 id="email"
                 type="email" 
                 className="auth-input"
-                placeholder="name@example.com"
+                placeholder="name@parkease.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
