@@ -1,19 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { MapPin, ArrowLeft, Info } from 'lucide-react';
 
 export default function ParkingDetails() {
-  const { parkingLots, slots, screenProps, navigate } = useAppContext();
-  const { lotId } = screenProps;
+  const { screenProps, navigate } = useAppContext();
+  const { facilityId } = screenProps;
   
-  const lot = parkingLots.find(l => l.id === lotId);
-  const lotSlots = slots.filter(s => s.lotId === lotId);
+  const [lot, setLot] = useState(null);
+  const [lotSlots, setLotSlots] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
   const [selectedSlot, setSelectedSlot] = useState(null);
 
-  if (!lot) return <div>Lot not found</div>;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const opts = { credentials: 'include' };
+        const [facRes, slotsRes] = await Promise.all([
+          fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/facilities/${facilityId}`, opts),
+          fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/facilities/${facilityId}/slots`, opts)
+        ]);
+        
+        if (!facRes.ok || !slotsRes.ok) throw new Error('Failed to fetch parking details');
+        
+        setLot(await facRes.json());
+        setLotSlots(await slotsRes.json());
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (facilityId) fetchData();
+  }, [facilityId]);
 
-  const available = lotSlots.filter(s => s.status === 'available').length;
+  if (loading) return <div className="p-8 text-forest">Loading...</div>;
+  if (error || !lot) return <div className="p-8 text-red-600">{error || 'Lot not found'}</div>;
+
+  const available = lotSlots.filter(s => s.status === 'AVAILABLE').length;
+  // Use a fallback price if the DB doesn't have it on the facility, although slots have hourly_rate
+  const pricePerHour = lotSlots.length > 0 ? lotSlots[0].hourly_rate : 0;
 
   return (
     <div className="fade-in max-w-3xl mx-auto">
@@ -28,14 +56,14 @@ export default function ParkingDetails() {
         <h2 className="text-2xl font-bold text-forest mb-2">{lot.name}</h2>
         <div className="flex items-center gap-1 text-sm text-muted mb-4">
           <MapPin size={16} />
-          <span>{lot.area}</span>
+          <span>{lot.area}, {lot.city}</span>
         </div>
         
         <p className="text-charcoal mb-6">{lot.description}</p>
         
         <div className="flex gap-4 p-4 bg-offwhite rounded-md mb-6">
           <div className="flex-1 text-center border-r border-border">
-            <span className="block text-xl font-bold text-forest">₹{lot.pricePerHour}</span>
+            <span className="block text-xl font-bold text-forest">₹{pricePerHour}</span>
             <span className="text-xs text-muted">Per Hour</span>
           </div>
           <div className="flex-1 text-center">
@@ -64,19 +92,26 @@ export default function ParkingDetails() {
         </div>
 
         <div className="slots-grid">
-          {lotSlots.map(slot => {
-            const isSelected = selectedSlot?.id === slot.id;
-            return (
-              <button
-                key={slot.id}
-                disabled={slot.status !== 'available'}
-                className={`slot ${slot.status} ${isSelected ? 'selected' : ''}`}
-                onClick={() => setSelectedSlot(slot)}
-              >
-                {slot.label}
-              </button>
-            );
-          })}
+          {lotSlots.length === 0 ? (
+            <div className="text-muted">No slots available.</div>
+          ) : (
+            lotSlots.map(slot => {
+              const isSelected = selectedSlot?.id === slot.id;
+              // Map DB status to UI classes
+              const statusClass = slot.status === 'AVAILABLE' ? 'available' : 'occupied';
+              
+              return (
+                <button
+                  key={slot.id}
+                  disabled={slot.status !== 'AVAILABLE'}
+                  className={`slot ${statusClass} ${isSelected ? 'selected' : ''}`}
+                  onClick={() => setSelectedSlot(slot)}
+                >
+                  {slot.slot_code}
+                </button>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -84,7 +119,7 @@ export default function ParkingDetails() {
         <div>
           <span className="block text-sm text-muted">Selected Slot</span>
           <span className="font-semibold text-forest text-lg">
-            {selectedSlot ? selectedSlot.label : 'None'}
+            {selectedSlot ? selectedSlot.slot_code : 'None'}
           </span>
         </div>
         <button 

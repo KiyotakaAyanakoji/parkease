@@ -27,10 +27,11 @@ export default function Login() {
     try {
       const result = await authService.login(email, password);
       // Success - redirect based on role
-      setRole(result.role);
+      const userRole = result.user.role;
+      setRole(userRole);
       let targetScreen = 'DriverDashboard';
-      if (result.role === 'ADMIN' || result.role === 'admin') targetScreen = 'AdminDashboard';
-      else if (result.role === 'OPERATOR' || result.role === 'operator') targetScreen = 'OperatorDashboard';
+      if (userRole === 'ADMIN' || userRole === 'admin') targetScreen = 'AdminDashboard';
+      else if (userRole === 'OPERATOR' || userRole === 'operator') targetScreen = 'OperatorDashboard';
       navigate(targetScreen);
     } catch (err) {
       setError(err.message || 'Failed to sign in.');

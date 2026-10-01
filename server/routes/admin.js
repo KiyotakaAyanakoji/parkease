@@ -98,9 +98,15 @@ router.post('/slots', async (req, res) => {
 router.get('/operators', async (req, res) => {
   try {
     const [operators] = await pool.query(`
-      SELECT id, name, email, status, created_at 
-      FROM users WHERE role = 'OPERATOR' 
-      ORDER BY created_at DESC
+      SELECT u.id, u.name, u.email, u.status, u.created_at,
+      GROUP_CONCAT(f.name SEPARATOR ', ') as assigned_facilities,
+      GROUP_CONCAT(f.id SEPARATOR ',') as assigned_facility_ids
+      FROM users u
+      LEFT JOIN operator_assignments oa ON u.id = oa.operator_user_id AND oa.status = 'ACTIVE'
+      LEFT JOIN facilities f ON oa.facility_id = f.id
+      WHERE u.role = 'OPERATOR'
+      GROUP BY u.id
+      ORDER BY u.created_at DESC
     `);
     res.json(operators);
   } catch (error) {
@@ -110,18 +116,111 @@ router.get('/operators', async (req, res) => {
 
 router.post('/operators', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, facilities = [] } = req.body;
     const [existing] = await pool.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(409).json({ message: 'Email already exists' });
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const [result] = await pool.query(
-      'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name, email.toLowerCase().trim(), passwordHash, 'OPERATOR']
-    );
-    res.status(201).json({ id: result.insertId, message: 'Operator created' });
+    
+    // Use transaction for safe operator + assignment creation
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      
+      const [result] = await connection.query(
+        'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
+        [name, email.toLowerCase().trim(), passwordHash, 'OPERATOR']
+      );
+      
+      const operatorId = result.insertId;
+      
+      // Insert assignments if provided
+      if (facilities.length > 0) {
+        const values = facilities.map(fid => [operatorId, fid]);
+        await connection.query(
+          'INSERT INTO operator_assignments (operator_user_id, facility_id) VALUES ?',
+          [values]
+        );
+      }
+      
+      await connection.commit();
+      res.status(201).json({ id: operatorId, message: 'Operator created' });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error creating operator' });
+  }
+});
+
+router.put('/operators/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!['ACTIVE', 'DISABLED'].includes(status)) return res.status(400).json({ message: 'Invalid status' });
+
+    // Validate operator exists
+    const [users] = await pool.query('SELECT id, role FROM users WHERE id = ? AND role = "OPERATOR"', [id]);
+    if (users.length === 0) return res.status(404).json({ message: 'Operator not found' });
+
+    await pool.query('UPDATE users SET status = ? WHERE id = ?', [status, id]);
+    
+    // Also disable assignments if DISABLED
+    if (status === 'DISABLED') {
+      await pool.query('UPDATE operator_assignments SET status = "INACTIVE" WHERE operator_user_id = ?', [id]);
+    } else {
+      await pool.query('UPDATE operator_assignments SET status = "ACTIVE" WHERE operator_user_id = ?', [id]);
+    }
+
+    res.json({ message: `Operator ${status.toLowerCase()}` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating operator status' });
+  }
+});
+
+router.put('/operators/:id/assignments', async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const { id } = req.params;
+    const { facilities = [] } = req.body;
+    
+    // Validate operator exists
+    const [users] = await connection.query('SELECT id FROM users WHERE id = ? AND role = "OPERATOR"', [id]);
+    if (users.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: 'Operator not found' });
+    }
+
+    await connection.beginTransaction();
+
+    // Soft delete all current assignments
+    await connection.query('UPDATE operator_assignments SET status = "INACTIVE" WHERE operator_user_id = ?', [id]);
+
+    // Insert or reactivate new assignments
+    if (facilities.length > 0) {
+      // For simplicity, we just insert them and ignore duplicates using INSERT IGNORE,
+      // but actually it's better to use ON DUPLICATE KEY UPDATE status = 'ACTIVE'
+      // since the UNIQUE KEY is (operator_user_id, facility_id).
+      const values = facilities.map(fid => [id, fid, 'ACTIVE']);
+      await connection.query(
+        'INSERT INTO operator_assignments (operator_user_id, facility_id, status) VALUES ? ON DUPLICATE KEY UPDATE status = VALUES(status)',
+        [values]
+      );
+    }
+
+    await connection.commit();
+    res.json({ message: 'Assignments updated successfully' });
+  } catch (error) {
+    await connection.rollback();
+    console.error(error);
+    res.status(500).json({ message: 'Error updating assignments' });
+  } finally {
+    connection.release();
   }
 });
 

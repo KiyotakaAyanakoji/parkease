@@ -8,7 +8,7 @@ export default function BookingConfirmation() {
 
   if (!booking) return <div>No booking data found.</div>;
 
-  const expectedArrival = new Date(booking.expectedArrival);
+  const expectedArrival = new Date(booking.expected_arrival);
   const deadline = new Date(expectedArrival.getTime() + 15 * 60000); // 15 min grace period
 
   const formatTime = (d) => d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -38,17 +38,17 @@ export default function BookingConfirmation() {
           
           <div>
             <h3 className="text-sm text-muted mb-1">Slot</h3>
-            <p className="font-semibold text-charcoal text-xl">{slot.label}</p>
+            <p className="font-semibold text-charcoal text-xl">{slot.slot_code}</p>
           </div>
 
           <div>
             <h3 className="text-sm text-muted mb-1">Vehicle</h3>
-            <p className="font-semibold text-charcoal">{booking.vehicle}</p>
+            <p className="font-semibold text-charcoal">{booking.vehicle_reg}</p>
           </div>
 
           <div>
             <h3 className="text-sm text-muted mb-1">Duration</h3>
-            <p className="font-semibold text-charcoal">{booking.duration} Hours</p>
+            <p className="font-semibold text-charcoal">{booking.expected_duration_hours} Hours</p>
           </div>
 
           <div className="md:col-span-2 bg-sage p-4 rounded-md">

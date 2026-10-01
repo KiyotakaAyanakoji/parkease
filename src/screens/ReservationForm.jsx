@@ -3,49 +3,81 @@ import { useAppContext } from '../context/AppContext';
 import { ArrowLeft, Clock, Info } from 'lucide-react';
 
 export default function ReservationForm() {
-  const { screenProps, navigate, createBooking } = useAppContext();
+  const { screenProps, navigate } = useAppContext();
   const { lot, slot } = screenProps;
   
   const [vehicle, setVehicle] = useState('MH-01-AB-1234');
   const [duration, setDuration] = useState(2); // hours
   const [time, setTime] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   if (!lot || !slot) return <div>Invalid reservation state</div>;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!time) return;
+    
+    setLoading(true);
+    setError('');
 
     // Create demo date based on today and selected time
     const [hours, minutes] = time.split(':');
     const expectedArrival = new Date();
     expectedArrival.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    
+    // Format to MySQL datetime: YYYY-MM-DD HH:MM:SS
+    const mysqlArrival = expectedArrival.toISOString().slice(0, 19).replace('T', ' ');
 
-    const booking = createBooking({
-      lotId: lot.id,
-      slotId: slot.id,
-      vehicle,
-      expectedArrival: expectedArrival.toISOString(),
-      duration: parseInt(duration),
-      price: lot.pricePerHour * duration,
-      driverName: 'Demo Driver'
-    });
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/bookings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          facility_id: lot.id,
+          slot_id: slot.id,
+          vehicle_reg: vehicle,
+          expected_arrival: mysqlArrival,
+          expected_duration_hours: parseInt(duration, 10)
+        })
+      });
 
-    navigate('BookingConfirmation', { booking, lot, slot });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to create booking');
+      
+      const booking = {
+        id: data.bookingId,
+        facility_name: lot.name,
+        slot_code: slot.slot_code,
+        vehicle_reg: vehicle,
+        expected_arrival: mysqlArrival,
+        expected_duration_hours: duration,
+        status: 'RESERVED',
+        total_price: slot.hourly_rate * duration
+      };
+
+      navigate('BookingConfirmation', { booking, lot, slot });
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
-  const estimatedTotal = lot.pricePerHour * duration;
+  const estimatedTotal = (slot.hourly_rate || 0) * duration;
 
   return (
     <div className="fade-in max-w-2xl mx-auto">
       <button 
         className="btn btn-ghost p-0 mb-6 flex items-center gap-2"
-        onClick={() => navigate('ParkingDetails', { lotId: lot.id })}
+        onClick={() => navigate('ParkingDetails', { facilityId: lot.id })}
       >
         <ArrowLeft size={16} /> Back
       </button>
 
       <h2 className="text-2xl font-bold text-forest mb-6">Complete Reservation</h2>
+      
+      {error && <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm">{error}</div>}
 
       <div className="grid gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
@@ -88,8 +120,8 @@ export default function ReservationForm() {
               </p>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full" disabled={!time}>
-              Confirm Reservation
+            <button type="submit" className="btn btn-primary w-full" disabled={!time || loading}>
+              {loading ? 'Processing...' : 'Confirm Reservation'}
             </button>
           </form>
         </div>
@@ -105,12 +137,12 @@ export default function ReservationForm() {
             
             <div className="mb-4">
               <span className="text-xs text-muted block">Slot</span>
-              <span className="font-medium text-charcoal block">{slot.label}</span>
+              <span className="font-medium text-charcoal block">{slot.slot_code}</span>
             </div>
 
             <div className="mb-4">
               <span className="text-xs text-muted block">Rate</span>
-              <span className="font-medium text-charcoal block">₹{lot.pricePerHour} / hour</span>
+              <span className="font-medium text-charcoal block">₹{slot.hourly_rate} / hour</span>
             </div>
 
             <div className="pt-4 border-t border-border mt-4 flex justify-between items-center">

@@ -1,25 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { ArrowLeft, Ban } from 'lucide-react';
 
 export default function MyBookings() {
-  const { bookings, parkingLots, slots, updateBookingStatus, navigate } = useAppContext();
+  const { navigate } = useAppContext();
   const [filter, setFilter] = useState('active'); // active, completed, cancelled
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const activeStatuses = ['reserved', 'checked-in', 'awaiting-response', 'confirmed-late'];
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/bookings`, {
+        credentials: 'include'
+      });
+      if (res.ok) {
+        setBookings(await res.json());
+      } else {
+        throw new Error('Failed to load bookings');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const activeStatuses = ['RESERVED', 'CHECKED_IN'];
   
   const filteredBookings = bookings.filter(b => {
     if (filter === 'active') return activeStatuses.includes(b.status);
-    if (filter === 'completed') return b.status === 'completed';
-    if (filter === 'cancelled') return b.status === 'cancelled' || b.status === 'released';
+    if (filter === 'completed') return b.status === 'COMPLETED';
+    if (filter === 'cancelled') return b.status === 'CANCELLED';
     return true;
   });
 
-  const handleCancel = (bookingId) => {
+  const handleCancel = async (bookingId) => {
     if (window.confirm('Are you sure you want to cancel this reservation?')) {
-      updateBookingStatus(bookingId, 'cancelled');
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/bookings/${bookingId}/cancel`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        if (res.ok) {
+          fetchBookings();
+        } else {
+          alert('Failed to cancel booking');
+        }
+      } catch (err) {
+        alert(err.message);
+      }
     }
   };
+
+  if (loading) return <div className="p-8 text-forest">Loading...</div>;
 
   return (
     <div className="fade-in max-w-4xl mx-auto">
@@ -50,6 +89,8 @@ export default function MyBookings() {
           Cancelled
         </button>
       </div>
+      
+      {error && <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm">{error}</div>}
 
       {filteredBookings.length === 0 ? (
         <div className="text-center py-12 card bg-offwhite border-none shadow-none">
@@ -63,25 +104,23 @@ export default function MyBookings() {
       ) : (
         <div className="grid gap-4">
           {filteredBookings.map(booking => {
-            const lot = parkingLots.find(l => l.id === booking.lotId);
-            const slot = slots.find(s => s.id === booking.slotId);
-            const isCancellable = booking.status === 'reserved' || booking.status === 'awaiting-response';
+            const isCancellable = booking.status === 'RESERVED';
 
             return (
               <div key={booking.id} className="card flex flex-col md:flex-row justify-between md:items-center gap-4">
                 <div>
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-bold text-forest">{booking.id}</span>
-                    <span className={`badge ${booking.status === 'checked-in' ? 'badge-success' : booking.status === 'cancelled' || booking.status === 'released' ? 'badge-error' : 'badge-neutral'}`}>
-                      {booking.status.replace('-', ' ')}
+                    <span className={`badge ${booking.status === 'CHECKED_IN' ? 'badge-success' : booking.status === 'CANCELLED' ? 'badge-error' : 'badge-neutral'}`}>
+                      {booking.status.replace('_', ' ')}
                     </span>
                   </div>
-                  <h4 className="font-semibold text-lg text-charcoal">{lot?.name}</h4>
-                  <p className="text-sm text-muted">Slot: {slot?.label || booking.slotId} • {new Date(booking.expectedArrival).toLocaleDateString()}</p>
+                  <h4 className="font-semibold text-lg text-charcoal">{booking.facility_name}</h4>
+                  <p className="text-sm text-muted">Slot: {booking.slot_code} • {new Date(booking.expected_arrival).toLocaleDateString()}</p>
                 </div>
                 
                 <div className="flex flex-col md:items-end gap-2 text-sm">
-                  <span className="font-semibold text-forest">₹{booking.price}</span>
+                  <span className="font-semibold text-forest">₹{booking.total_price}</span>
                   {isCancellable && (
                     <button 
                       className="text-error font-medium hover:underline flex items-center gap-1"
