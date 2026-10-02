@@ -1,6 +1,7 @@
 import express from 'express';
 import pool from '../db.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import { calculatePrice } from '../services/pricingService.js';
 
 const router = express.Router();
 
@@ -49,6 +50,34 @@ router.get('/facilities/:id/slots', async (req, res) => {
   }
 });
 
+// ... (keep 1, 2, 2.5 above)
+
+// 2.7 Get Estimate
+router.post('/estimate', async (req, res) => {
+  try {
+    const { facility_id, expected_arrival, expected_duration_hours } = req.body;
+    if (!facility_id || !expected_arrival || !expected_duration_hours) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const [facility] = await pool.query('SELECT name FROM facilities WHERE id = ?', [facility_id]);
+    if (facility.length === 0) {
+      return res.status(404).json({ message: 'Facility not found' });
+    }
+
+    const pricing = await calculatePrice(facility_id, expected_arrival, expected_duration_hours);
+    
+    res.json({
+      currency: 'INR',
+      facility: facility[0].name,
+      ...pricing
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: error.message || 'Error calculating estimate' });
+  }
+});
+
 // 3. Create Booking (Immediate Transaction)
 router.post('/bookings', async (req, res) => {
   const connection = await pool.getConnection();
@@ -63,7 +92,7 @@ router.post('/bookings', async (req, res) => {
     await connection.beginTransaction();
 
     // Lock the slot and check availability
-    const [slots] = await connection.query('SELECT id, facility_id, status, hourly_rate FROM parking_slots WHERE id = ? FOR UPDATE', [slot_id]);
+    const [slots] = await connection.query('SELECT id, facility_id, status FROM parking_slots WHERE id = ? FOR UPDATE', [slot_id]);
     
     if (slots.length === 0) {
       await connection.rollback();
@@ -84,8 +113,10 @@ router.post('/bookings', async (req, res) => {
       return res.status(409).json({ message: 'Slot is no longer available' });
     }
 
-    // Calculate price
-    const total_price = slot.hourly_rate * expected_duration_hours;
+    // Calculate actual confirmed price on backend
+    const pricingResult = await calculatePrice(facility_id, expected_arrival, expected_duration_hours);
+    const total_price = pricingResult.finalAmount;
+    const pricing_rules_applied = JSON.stringify(pricingResult);
     
     // Generate Booking ID (e.g. BKG-XXXXXX)
     const bookingId = `BKG-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
@@ -95,16 +126,16 @@ router.post('/bookings', async (req, res) => {
 
     // Insert booking
     await connection.query(`
-      INSERT INTO bookings (id, user_id, facility_id, slot_id, vehicle_reg, expected_arrival, expected_duration_hours, status, total_price)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'RESERVED', ?)
-    `, [bookingId, userId, facility_id, slot_id, vehicle_reg, expected_arrival, expected_duration_hours, total_price]);
+      INSERT INTO bookings (id, user_id, facility_id, slot_id, vehicle_reg, expected_arrival, expected_duration_hours, status, total_price, pricing_rules_applied)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 'RESERVED', ?, ?)
+    `, [bookingId, userId, facility_id, slot_id, vehicle_reg, expected_arrival, expected_duration_hours, total_price, pricing_rules_applied]);
 
     await connection.commit();
-    res.status(201).json({ message: 'Booking successful', bookingId });
+    res.status(201).json({ message: 'Booking successful', bookingId, confirmedPrice: total_price });
   } catch (error) {
     await connection.rollback();
     console.error(error);
-    res.status(500).json({ message: 'Error creating booking' });
+    res.status(500).json({ message: error.message || 'Error creating booking' });
   } finally {
     connection.release();
   }
@@ -126,6 +157,30 @@ router.get('/bookings', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Error fetching bookings' });
+  }
+});
+
+// 4.5 Get Single Booking (For QR Code retrieval)
+router.get('/bookings/:id', async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const { id } = req.params;
+    const [bookings] = await pool.query(`
+      SELECT b.*, f.name as facility_name, f.address, ps.slot_code 
+      FROM bookings b
+      JOIN facilities f ON b.facility_id = f.id
+      JOIN parking_slots ps ON b.slot_id = ps.id
+      WHERE b.user_id = ? AND b.id = ?
+    `, [userId, id]);
+
+    if (bookings.length === 0) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.json(bookings[0]);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching booking' });
   }
 });
 

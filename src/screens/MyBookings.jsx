@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { ArrowLeft, Ban } from 'lucide-react';
+import { ArrowLeft, Ban, QrCode, X } from 'lucide-react';
 
 export default function MyBookings() {
   const { navigate } = useAppContext();
@@ -8,6 +8,7 @@ export default function MyBookings() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   const fetchBookings = async () => {
     try {
@@ -105,6 +106,7 @@ export default function MyBookings() {
         <div className="grid gap-4">
           {filteredBookings.map(booking => {
             const isCancellable = booking.status === 'RESERVED';
+            const showQR = ['RESERVED', 'CHECKED_IN'].includes(booking.status);
 
             return (
               <div key={booking.id} className="card flex flex-col md:flex-row justify-between md:items-center gap-4">
@@ -119,20 +121,101 @@ export default function MyBookings() {
                   <p className="text-sm text-muted">Slot: {booking.slot_code} • {new Date(booking.expected_arrival).toLocaleDateString()}</p>
                 </div>
                 
-                <div className="flex flex-col md:items-end gap-2 text-sm">
-                  <span className="font-semibold text-forest">₹{booking.total_price}</span>
-                  {isCancellable && (
-                    <button 
-                      className="text-error font-medium hover:underline flex items-center gap-1"
-                      onClick={() => handleCancel(booking.id)}
-                    >
-                      <Ban size={14} /> Cancel Reservation
-                    </button>
+                <div className="flex flex-col md:items-end gap-3 text-sm">
+                  {booking.pricing_rules_applied ? (
+                    <div className="text-right">
+                      <span className="font-semibold text-forest text-lg">₹{booking.total_price}</span>
+                      <p className="text-xs text-muted max-w-xs">{booking.pricing_rules_applied.explanation}</p>
+                    </div>
+                  ) : (
+                    <div className="text-right">
+                      <span className="font-semibold text-forest text-lg">₹{booking.total_price}</span>
+                      <p className="text-xs text-muted italic">Price not recorded</p>
+                    </div>
                   )}
+                  <div className="flex items-center gap-4 flex-wrap border-t border-border pt-2 w-full md:w-auto md:justify-end">
+                    {showQR && (
+                      <button 
+                        className="btn btn-primary btn-sm flex items-center gap-1"
+                        onClick={() => setSelectedBooking(booking)}
+                      >
+                        <QrCode size={16} /> View QR
+                      </button>
+                    )}
+                    {isCancellable && (
+                      <button 
+                        className="text-error font-medium hover:underline flex items-center gap-1"
+                        onClick={() => handleCancel(booking.id)}
+                      >
+                        <Ban size={14} /> Cancel
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {selectedBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={(e) => { if (e.target === e.currentTarget) setSelectedBooking(null); }}>
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative">
+            <button 
+              className="absolute top-4 right-4 text-muted hover:text-charcoal"
+              onClick={() => setSelectedBooking(null)}
+            >
+              <X size={24} />
+            </button>
+            <h3 className="text-xl font-bold text-forest mb-4 text-center">Booking QR Code</h3>
+            
+            {['RESERVED', 'CHECKED_IN'].includes(selectedBooking.status) ? (
+              <div className="flex flex-col items-center">
+                <div className="border-4 border-forest p-2 rounded bg-white mb-4">
+                  <img 
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${selectedBooking.id}`}
+                    alt="Booking QR"
+                    width={150}
+                    height={150}
+                  />
+                </div>
+                <p className="text-sm text-center text-muted mb-6">
+                  Present this QR code to the operator upon {selectedBooking.status === 'RESERVED' ? 'arrival' : 'departure'}.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6 text-center text-sm">
+                QR code is only available for active reservations. This booking is currently <strong>{selectedBooking.status}</strong>.
+              </div>
+            )}
+
+            <div className="space-y-3 text-sm bg-offwhite p-4 rounded-lg">
+              <div className="flex justify-between">
+                <span className="text-muted">Reference</span>
+                <span className="font-bold text-charcoal">{selectedBooking.id}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Facility</span>
+                <span className="font-medium text-charcoal">{selectedBooking.facility_name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Slot</span>
+                <span className="font-medium text-charcoal">{selectedBooking.slot_code}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Vehicle</span>
+                <span className="font-medium text-charcoal">{selectedBooking.vehicle_reg}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Arrival</span>
+                <span className="font-medium text-charcoal">{new Date(selectedBooking.expected_arrival).toLocaleString([], {hour: '2-digit', minute:'2-digit', month: 'short', day: 'numeric'})}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted">Status</span>
+                <span className="font-medium text-charcoal font-bold">{selectedBooking.status.replace('_', ' ')}</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

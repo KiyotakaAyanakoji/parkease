@@ -8,7 +8,7 @@ const router = express.Router();
 router.use(requireAuth);
 router.use(requireRole(['ADMIN']));
 
-// --- OVERVIEW ---
+// --- OVERVIEW & ANALYTICS ---
 router.get('/overview', async (req, res) => {
   try {
     const [[{ total_facilities }]] = await pool.query('SELECT COUNT(*) as total_facilities FROM facilities');
@@ -28,6 +28,92 @@ router.get('/overview', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching overview data' });
+  }
+});
+
+router.get('/analytics', async (req, res) => {
+  try {
+    const [[{ active_facilities }]] = await pool.query('SELECT COUNT(*) as active_facilities FROM facilities WHERE status = "ACTIVE"');
+    const [[{ total_slots }]] = await pool.query('SELECT COUNT(*) as total_slots FROM parking_slots');
+    
+    const [slot_statuses] = await pool.query('SELECT status, COUNT(*) as c FROM parking_slots GROUP BY status');
+    const slot_counts = { AVAILABLE: 0, RESERVED: 0, OCCUPIED: 0, MAINTENANCE: 0 };
+    slot_statuses.forEach(r => slot_counts[r.status] = r.c);
+
+    const [[{ total_bookings }]] = await pool.query('SELECT COUNT(*) as total_bookings FROM bookings');
+    const [[{ active_bookings }]] = await pool.query('SELECT COUNT(*) as active_bookings FROM bookings WHERE status IN ("RESERVED", "CHECKED_IN")');
+    const [[{ registered_drivers }]] = await pool.query('SELECT COUNT(*) as registered_drivers FROM users WHERE role = "DRIVER"');
+
+    // Confirmed booking value for bookings that have pricing_rules_applied
+    // We only sum it up for non-cancelled bookings.
+    const [[{ confirmed_booking_value }]] = await pool.query(`
+      SELECT SUM(total_price) as confirmed_booking_value 
+      FROM bookings 
+      WHERE status != "CANCELLED" AND pricing_rules_applied IS NOT NULL
+    `);
+
+    const [booking_trends] = await pool.query(`
+      SELECT DATE(created_at) as date, COUNT(*) as count 
+      FROM bookings 
+      GROUP BY DATE(created_at) 
+      ORDER BY date ASC 
+      LIMIT 30
+    `);
+
+    res.json({
+      active_facilities,
+      total_slots,
+      slot_counts,
+      total_bookings,
+      active_bookings,
+      registered_drivers,
+      confirmed_booking_value: confirmed_booking_value || 0,
+      booking_trends
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching analytics' });
+  }
+});
+
+router.get('/facilities/:id/performance', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { start_date, end_date } = req.query;
+
+    const [[facility]] = await pool.query('SELECT name, area, city FROM facilities WHERE id = ?', [id]);
+    if (!facility) return res.status(404).json({ message: 'Facility not found' });
+
+    const [[{ total_slots }]] = await pool.query('SELECT COUNT(*) as total_slots FROM parking_slots WHERE facility_id = ?', [id]);
+    const [slot_statuses] = await pool.query('SELECT status, COUNT(*) as c FROM parking_slots WHERE facility_id = ? GROUP BY status', [id]);
+    const slot_counts = { AVAILABLE: 0, RESERVED: 0, OCCUPIED: 0, MAINTENANCE: 0 };
+    slot_statuses.forEach(r => slot_counts[r.status] = r.c);
+    
+    // Define occupancy percentage: (OCCUPIED + RESERVED) / total_slots
+    const occupied_or_reserved = slot_counts.OCCUPIED + slot_counts.RESERVED;
+    const occupancy_percentage = total_slots > 0 ? ((occupied_or_reserved / total_slots) * 100).toFixed(1) : 0;
+
+    let dateFilter = '';
+    const queryParams = [id];
+    if (start_date && end_date) {
+      dateFilter = ' AND created_at >= ? AND created_at <= ?';
+      queryParams.push(start_date + ' 00:00:00', end_date + ' 23:59:59');
+    }
+
+    const [[{ bookings_count }]] = await pool.query(`SELECT COUNT(*) as bookings_count FROM bookings WHERE facility_id = ?${dateFilter}`, queryParams);
+    const [[{ cancellations_count }]] = await pool.query(`SELECT COUNT(*) as cancellations_count FROM bookings WHERE facility_id = ? AND status = "CANCELLED"${dateFilter}`, queryParams);
+
+    res.json({
+      facility: { ...facility, id },
+      total_slots,
+      slot_counts,
+      occupancy_percentage,
+      bookings_count,
+      cancellations_count
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching facility performance' });
   }
 });
 
@@ -221,6 +307,72 @@ router.put('/operators/:id/assignments', async (req, res) => {
     res.status(500).json({ message: 'Error updating assignments' });
   } finally {
     connection.release();
+  }
+});
+
+// --- PRICING ---
+router.get('/pricing', async (req, res) => {
+  try {
+    const [pricings] = await pool.query(`
+      SELECT fp.*, f.name as facility_name
+      FROM facility_pricing fp
+      JOIN facilities f ON fp.facility_id = f.id
+      ORDER BY f.name ASC
+    `);
+    res.json(pricings);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching pricing configuration' });
+  }
+});
+
+router.put('/pricing/:facility_id', async (req, res) => {
+  try {
+    const { facility_id } = req.params;
+    const {
+      base_hourly_rate,
+      peak_enabled,
+      peak_start_time,
+      peak_end_time,
+      peak_multiplier,
+      weekend_enabled,
+      weekend_multiplier
+    } = req.body;
+
+    if (base_hourly_rate < 0 || peak_multiplier <= 0 || weekend_multiplier <= 0) {
+      return res.status(400).json({ message: 'Rates and multipliers must be strictly positive' });
+    }
+
+    if (peak_enabled && peak_start_time === peak_end_time) {
+      return res.status(400).json({ message: 'Peak start and end times must differ' });
+    }
+
+    await pool.query(`
+      UPDATE facility_pricing
+      SET 
+        base_hourly_rate = ?,
+        peak_enabled = ?,
+        peak_start_time = ?,
+        peak_end_time = ?,
+        peak_multiplier = ?,
+        weekend_enabled = ?,
+        weekend_multiplier = ?
+      WHERE facility_id = ?
+    `, [
+      base_hourly_rate,
+      peak_enabled,
+      peak_start_time || '00:00:00',
+      peak_end_time || '00:00:00',
+      peak_multiplier,
+      weekend_enabled,
+      weekend_multiplier,
+      facility_id
+    ]);
+
+    res.json({ message: 'Pricing configuration updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating pricing configuration' });
   }
 });
 

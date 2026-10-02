@@ -187,19 +187,49 @@ router.post('/checkout/:bookingId', async (req, res) => {
 router.get('/activity', async (req, res) => {
   try {
     const operatorId = req.session.user.id;
-    const [assignments] = await pool.query('SELECT facility_id FROM operator_assignments WHERE operator_user_id = ? AND status = "ACTIVE"', [operatorId]);
-    if (assignments.length === 0) return res.json([]);
+    const { start_date, end_date, facility_id, format } = req.query;
 
-    const facilityIds = assignments.map(a => a.facility_id);
+    const [assignments] = await pool.query('SELECT facility_id FROM operator_assignments WHERE operator_user_id = ? AND status = "ACTIVE"', [operatorId]);
+    if (assignments.length === 0) return format === 'csv' ? res.send('Timestamp,Event,Booking ID,Facility,Slot\n') : res.json([]);
+
+    const allowedFacilityIds = assignments.map(a => a.facility_id);
+    let filterFacilityIds = allowedFacilityIds;
+
+    // Filter by facility if specified and authorized
+    if (facility_id) {
+      const fId = parseInt(facility_id, 10);
+      if (!allowedFacilityIds.includes(fId)) {
+        return res.status(403).json({ message: 'Not authorized for this facility' });
+      }
+      filterFacilityIds = [fId];
+    }
+
+    let dateFilter = '';
+    const queryParams = [filterFacilityIds];
+    if (start_date && end_date) {
+      dateFilter = ' AND al.created_at >= ? AND al.created_at <= ?';
+      queryParams.push(start_date + ' 00:00:00', end_date + ' 23:59:59');
+    }
+
     const [logs] = await pool.query(`
       SELECT al.*, f.name as facility_name, ps.slot_code 
       FROM activity_logs al
       JOIN facilities f ON al.facility_id = f.id
       JOIN parking_slots ps ON al.slot_id = ps.id
-      WHERE al.facility_id IN (?)
+      WHERE al.facility_id IN (?)${dateFilter}
       ORDER BY al.created_at DESC
-      LIMIT 100
-    `, [facilityIds]);
+      LIMIT 1000
+    `, queryParams);
+
+    if (format === 'csv') {
+      let csv = 'Timestamp,Event,Booking ID,Facility,Slot\n';
+      logs.forEach(log => {
+        csv += `"${log.created_at}","${log.event_type}","${log.booking_id}","${log.facility_name}","${log.slot_code}"\n`;
+      });
+      res.header('Content-Type', 'text/csv');
+      res.attachment('activity_report.csv');
+      return res.send(csv);
+    }
 
     res.json(logs);
   } catch (error) {

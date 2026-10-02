@@ -22,17 +22,41 @@ test('Driver Bookings Concurrency and API Tests', async (t) => {
   let fId, sId, driver1Id, driver2Id;
   const connection = await pool.getConnection();
 
+  const uniq = Date.now() + Math.floor(Math.random() * 1000);
+  const d1Email = `d1_${uniq}@test.com`;
+  const d2Email = `d2_${uniq}@test.com`;
+  const fCode = `TF1-${uniq}`;
+  const sCode = `S1-${uniq}`;
+
+  const created = {
+    users: [],
+    facilities: [],
+    slots: [],
+    bookings: []
+  };
+
+  t.after(async () => {
+    if (created.bookings.length > 0) await connection.query('DELETE FROM bookings WHERE id IN (?)', [created.bookings]);
+    if (created.slots.length > 0) await connection.query('DELETE FROM parking_slots WHERE id IN (?)', [created.slots]);
+    if (created.facilities.length > 0) await connection.query('DELETE FROM facilities WHERE id IN (?)', [created.facilities]);
+    if (created.users.length > 0) await connection.query('DELETE FROM users WHERE id IN (?)', [created.users]);
+    connection.release();
+  });
+
   await t.test('setup test data', async () => {
-    const [u1] = await connection.query('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', ['D1', 'd1@test.com', 'h', 'DRIVER']);
-    driver1Id = u1.insertId;
-    const [u2] = await connection.query('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', ['D2', 'd2@test.com', 'h', 'DRIVER']);
-    driver2Id = u2.insertId;
+    const [u1] = await connection.query('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', ['D1', d1Email, 'h', 'DRIVER']);
+    driver1Id = u1.insertId; created.users.push(driver1Id);
 
-    const [fac] = await connection.query('INSERT INTO facilities (name, facility_code, address, area, city, status) VALUES (?, ?, ?, ?, ?, ?)', ['Test Fac', 'TF1', 'A', 'A', 'C', 'ACTIVE']);
-    fId = fac.insertId;
+    const [u2] = await connection.query('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)', ['D2', d2Email, 'h', 'DRIVER']);
+    driver2Id = u2.insertId; created.users.push(driver2Id);
 
-    const [slot] = await connection.query('INSERT INTO parking_slots (facility_id, slot_code, hourly_rate, status) VALUES (?, ?, ?, ?)', [fId, 'S1', 50, 'AVAILABLE']);
-    sId = slot.insertId;
+    const [fac] = await connection.query('INSERT INTO facilities (name, facility_code, address, area, city, status) VALUES (?, ?, ?, ?, ?, ?)', ['Test Fac', fCode, 'A', 'A', 'C', 'ACTIVE']);
+    fId = fac.insertId; created.facilities.push(fId);
+
+    await connection.query('INSERT INTO facility_pricing (facility_id, base_hourly_rate) VALUES (?, 50.00)', [fId]);
+
+    const [slot] = await connection.query('INSERT INTO parking_slots (facility_id, slot_code, hourly_rate, status) VALUES (?, ?, ?, ?)', [fId, sCode, 50, 'AVAILABLE']);
+    sId = slot.insertId; created.slots.push(sId);
   });
 
   await t.test('concurrent booking - one succeeds, one fails', async () => {
@@ -64,17 +88,26 @@ test('Driver Bookings Concurrency and API Tests', async (t) => {
     const [slots] = await connection.query('SELECT status FROM parking_slots WHERE id = ?', [sId]);
     assert.strictEqual(slots[0].status, 'RESERVED');
 
-    const [bookings] = await connection.query('SELECT COUNT(*) as c FROM bookings WHERE slot_id = ?', [sId]);
-    assert.strictEqual(bookings[0].c, 1);
+    const [bookings] = await connection.query('SELECT id, COUNT(*) as c FROM bookings WHERE slot_id = ? GROUP BY id', [sId]);
+    assert.strictEqual(bookings.length, 1);
+    const bookingId = bookings[0].id;
+    created.bookings.push(bookingId);
+
+    // Test QR retrieval endpoint
+    const qrReq = await fetch(`http://localhost:${port}/driver/bookings/${bookingId}`, {
+      headers: { 'x-user-id': driver1Id.toString() }
+    });
+    
+    if (res1.ok) {
+      assert.strictEqual(qrReq.ok, true, 'Driver 1 should be able to retrieve their own booking QR info');
+      const qrData = await qrReq.json();
+      assert.strictEqual(qrData.id, bookingId);
+      assert.strictEqual(qrData.status, 'RESERVED');
+    } else {
+      // If res2 was the one that succeeded, driver1 shouldn't be able to fetch it
+      assert.strictEqual(qrReq.ok, false, 'Driver 1 should not be able to retrieve Driver 2 booking');
+    }
 
     server.close();
-  });
-
-  await t.test('cleanup', async () => {
-    await connection.query('DELETE FROM bookings WHERE slot_id = ?', [sId]);
-    await connection.query('DELETE FROM parking_slots WHERE id = ?', [sId]);
-    await connection.query('DELETE FROM facilities WHERE id = ?', [fId]);
-    await connection.query('DELETE FROM users WHERE id IN (?, ?)', [driver1Id, driver2Id]);
-    connection.release();
   });
 });

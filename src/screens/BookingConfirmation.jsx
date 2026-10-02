@@ -51,6 +51,18 @@ export default function BookingConfirmation() {
             <p className="font-semibold text-charcoal">{booking.expected_duration_hours} Hours</p>
           </div>
 
+          <div className="md:col-span-2 border-t border-border pt-4 mt-2">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-sm font-semibold text-forest">Confirmed Amount</h3>
+              <span className="font-bold text-xl text-forest">₹{booking.total_price}</span>
+            </div>
+            {booking.pricing_breakdown && (
+              <div className="text-xs text-muted bg-gray-50 p-3 rounded-md">
+                {booking.pricing_breakdown.explanation}
+              </div>
+            )}
+          </div>
+
           <div className="md:col-span-2 bg-sage p-4 rounded-md">
             <h3 className="text-sm font-semibold text-forest mb-2">Arrival Timeline</h3>
             <div className="flex justify-between items-center text-sm">
@@ -68,9 +80,15 @@ export default function BookingConfirmation() {
 
         <div className="mt-6 pt-6 border-t border-border flex flex-col items-center justify-center">
           <div className="border-4 border-forest p-2 rounded bg-white mb-2 inline-block">
-            <QrCode size={120} className="text-forest" />
+            <img 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${booking.id}`}
+              alt={`QR Code for Booking ${booking.id}`}
+              width={120}
+              height={120}
+              className="mx-auto"
+            />
           </div>
-          <span className="text-xs font-semibold text-forest uppercase tracking-widest">Demo QR / Booking Code</span>
+          <span className="text-xs font-semibold text-forest uppercase tracking-widest">Booking QR Code</span>
           <span className="text-xs text-muted mt-1">Show this at the entrance</span>
         </div>
       </div>

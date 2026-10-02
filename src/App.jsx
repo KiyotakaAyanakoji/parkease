@@ -17,6 +17,7 @@ import AdminDashboard from './screens/AdminDashboard';
 import AdminFacilities from './screens/AdminFacilities';
 import AdminSlots from './screens/AdminSlots';
 import AdminOperators from './screens/AdminOperators';
+import AdminPricing from './screens/AdminPricing';
 import LandingPage from './screens/LandingPage';
 
 const ScreenManager = () => {
@@ -40,6 +41,7 @@ const ScreenManager = () => {
       case 'AdminFacilities': return <AdminFacilities />;
       case 'AdminSlots': return <AdminSlots />;
       case 'AdminOperators': return <AdminOperators />;
+      case 'AdminPricing': return <AdminPricing />;
       default: return <LandingPage />;
     }
   };
@@ -108,6 +110,13 @@ const ScreenManager = () => {
                 style={{justifyContent: 'flex-start'}}
               >
                 Operators
+              </button>
+              <button 
+                onClick={() => navigate('AdminPricing')}
+                className={`btn ${currentScreen === 'AdminPricing' ? 'btn-primary' : 'btn-ghost text-white'}`}
+                style={{justifyContent: 'flex-start'}}
+              >
+                Pricing Rules
               </button>
             </>
           ) : role === 'DRIVER' ? (
