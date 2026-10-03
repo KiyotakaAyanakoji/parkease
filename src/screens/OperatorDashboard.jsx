@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Car, Clock, LogIn, LogOut, CheckCircle } from 'lucide-react';
+import { Car, Clock, LogIn, LogOut, CheckCircle, Activity, ChevronRight, MapPin } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
+import { motion } from 'framer-motion';
 
 export default function OperatorDashboard() {
   const { navigate, role, user } = useAppContext();
@@ -40,6 +41,9 @@ export default function OperatorDashboard() {
       return;
     }
     fetchData();
+    // Simulate live updates
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
   }, [role, navigate]);
 
   const handleAction = async (bookingId, action) => {
@@ -56,93 +60,156 @@ export default function OperatorDashboard() {
     }
   };
 
-  if (loading) return <div className="p-8 text-forest">Loading Operator Dashboard...</div>;
-  if (facilities.length === 0) return <div className="p-8 text-red-600 font-bold">You are not assigned to any facilities. Please contact an admin.</div>;
-
-  return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <h1 className="text-2xl font-bold text-forest mb-2">Welcome, {user?.name}</h1>
-      <p className="text-muted mb-8">Managing: {facilities.map(f => f.name).join(', ')}</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted font-medium mb-1">Total Capacity</p>
-            <p className="text-3xl font-bold text-forest">{stats.total}</p>
-          </div>
-          <Car className="text-primary opacity-50" size={32} />
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted font-medium mb-1">Available</p>
-            <p className="text-3xl font-bold text-mint">{stats.available}</p>
-          </div>
-          <CheckCircle className="text-mint opacity-50" size={32} />
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted font-medium mb-1">Occupied</p>
-            <p className="text-3xl font-bold text-amber-500">{stats.occupied}</p>
-          </div>
-          <Car className="text-amber-500 opacity-50" size={32} />
-        </div>
-        <div className="bg-white p-6 rounded-xl border border-border shadow-sm flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted font-medium mb-1">Active Bookings</p>
-            <p className="text-3xl font-bold text-blue-500">{stats.active_reservations}</p>
-          </div>
-          <Clock className="text-blue-500 opacity-50" size={32} />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-border bg-offwhite">
-          <h2 className="font-semibold text-forest">Today's Reservations</h2>
-        </div>
-        <table className="w-full text-left">
-          <thead className="bg-sage text-forest text-sm">
-            <tr>
-              <th className="p-4 font-medium">Ref</th>
-              <th className="p-4 font-medium">Vehicle</th>
-              <th className="p-4 font-medium">Slot</th>
-              <th className="p-4 font-medium">Arrival</th>
-              <th className="p-4 font-medium">Status</th>
-              <th className="p-4 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservations.length === 0 ? (
-              <tr><td colSpan="6" className="p-8 text-center text-muted">No reservations found for your facilities.</td></tr>
-            ) : (
-              reservations.map(r => (
-                <tr key={r.id} className="border-t border-border hover:bg-offwhite">
-                  <td className="p-4 font-medium text-xs">{r.id.split('-').pop()}</td>
-                  <td className="p-4 font-bold">{r.vehicle_reg}</td>
-                  <td className="p-4 text-muted">{r.slot_code}</td>
-                  <td className="p-4 text-muted">{new Date(r.expected_arrival).toLocaleTimeString()}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 text-xs rounded-full ${r.status === 'RESERVED' ? 'bg-blue-100 text-blue-800' : r.status === 'CHECKED_IN' ? 'bg-amber-100 text-amber-800' : 'bg-gray-100'}`}>
-                      {r.status}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    {r.status === 'RESERVED' && (
-                      <button onClick={() => handleAction(r.id, 'checkin')} className="btn btn-primary text-xs flex gap-1 items-center px-3 py-1">
-                        <LogIn size={14} /> Check In
-                      </button>
-                    )}
-                    {r.status === 'CHECKED_IN' && (
-                      <button onClick={() => handleAction(r.id, 'checkout')} className="bg-amber-500 text-white rounded-md text-xs font-medium flex gap-1 items-center px-3 py-2">
-                        <LogOut size={14} /> Check Out
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+  if (loading) return (
+    <div className="flex items-center justify-center h-64">
+      <div className="animate-pulse flex flex-col items-center">
+        <div className="w-12 h-12 bg-surface rounded-full mb-4"></div>
+        <div className="h-4 w-32 bg-surface rounded-full"></div>
       </div>
     </div>
+  );
+  
+  if (facilities.length === 0) return (
+    <div className="max-w-3xl mx-auto mt-24 text-center">
+      <h2 className="text-2xl font-bold text-forest mb-4">No Facilities Assigned</h2>
+      <p className="text-muted">You are not currently assigned to operate any parking facilities. Please contact your administrator.</p>
+    </div>
+  );
+
+  const activeFacility = facilities[0]; // For demo, assume primary facility is first
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="layout-container pb-24"
+    >
+      <header className="mb-12 mt-8 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border pb-6">
+        <div>
+          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 text-sm font-bold tracking-widest uppercase text-muted mb-3">
+            <span className="w-2 h-2 rounded-full bg-warning animate-pulse"></span>
+            LIVE OPERATIONS COCKPIT
+          </motion.div>
+          <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="text-4xl md-text-5xl font-bold tracking-tight text-forest mb-2">
+            {activeFacility.name.toUpperCase()}
+          </motion.h1>
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="text-muted font-medium flex items-center gap-2">
+            <MapPin size={16} /> {activeFacility.area}
+          </motion.p>
+        </div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="text-right">
+          <p className="text-sm font-semibold uppercase text-muted">Operator</p>
+          <p className="text-lg font-bold text-forest">{user?.name}</p>
+        </motion.div>
+      </header>
+
+      {/* Primary Occupancy Visualizer */}
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="mb-16"
+      >
+        <div className="flex flex-col md:flex-row gap-12 items-center">
+          <div className="flex-1 w-full">
+            <div className="flex justify-between items-end mb-4">
+              <span className="text-6xl font-bold text-forest tracking-tighter">
+                {Math.round((stats.occupied / (stats.total || 1)) * 100)}<span className="text-3xl">%</span>
+              </span>
+              <div className="text-right">
+                <span className="block text-xl font-bold text-forest">{stats.occupied} / {stats.total}</span>
+                <span className="text-sm font-bold uppercase text-muted tracking-widest">Slots Occupied</span>
+              </div>
+            </div>
+            <div className="h-4 w-full bg-surface rounded-full overflow-hidden flex">
+              <div className="h-full bg-forest" style={{ width: `${(stats.occupied / (stats.total || 1)) * 100}%` }}></div>
+              <div className="h-full bg-warning opacity-80" style={{ width: `${(stats.active_reservations / (stats.total || 1)) * 100}%` }}></div>
+            </div>
+            <div className="flex gap-6 mt-6">
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-forest"></span><span className="text-sm font-semibold">Occupied ({stats.occupied})</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-warning"></span><span className="text-sm font-semibold">Reserved ({stats.active_reservations})</span></div>
+              <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-surface border border-muted"></span><span className="text-sm font-semibold text-muted">Available ({stats.available})</span></div>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
+            <button onClick={() => navigate('OperatorFacilities')} className="p-6 bg-white border border-border rounded-2xl hover:border-primary transition-all group flex flex-col items-center justify-center min-w-[160px]">
+              <Activity size={24} className="text-primary mb-2 group-hover:scale-110 transition-transform" />
+              <span className="font-semibold text-sm">Parking Floor</span>
+            </button>
+            <button onClick={() => navigate('OperatorPricing')} className="p-6 bg-white border border-border rounded-2xl hover:border-primary transition-all group flex flex-col items-center justify-center min-w-[160px]">
+              <span className="text-xl font-bold text-forest mb-2 group-hover:text-primary transition-colors">₹</span>
+              <span className="font-semibold text-sm">Live Pricing</span>
+            </button>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Live Arrivals Timeline */}
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+      >
+        <div className="flex justify-between items-center mb-8 pb-4 border-b border-border">
+          <h2 className="text-2xl font-bold text-forest">Arriving Vehicles</h2>
+          <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+            {reservations.length} Active
+          </span>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {reservations.length === 0 ? (
+            <div className="py-12 text-center border-2 border-dashed border-border rounded-2xl">
+              <p className="text-muted font-medium">No pending arrivals or active check-ins.</p>
+            </div>
+          ) : (
+            reservations.map((r, i) => (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * i }}
+                key={r.id} 
+                className="bg-white rounded-2xl border border-border p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6"
+              >
+                <div className="flex items-center gap-6">
+                  <div className="text-center min-w-[80px]">
+                    <span className="block text-2xl font-bold text-forest tracking-tighter">
+                      {new Date(r.expected_arrival).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                    <span className="text-xs font-semibold uppercase text-muted">Arrival</span>
+                  </div>
+                  
+                  <div className="h-12 w-px bg-border hidden md:block"></div>
+                  
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-xl font-bold tracking-tight bg-offwhite px-3 py-1 rounded-md border border-border">{r.vehicle_reg}</h3>
+                      <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full ${r.status === 'RESERVED' ? 'bg-warning/20 text-warning' : 'bg-primary/20 text-primary'}`}>
+                        {r.status.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <p className="text-muted text-sm font-medium">Slot <span className="text-forest font-bold">{r.slot_code}</span> • Ref: {r.id.split('-').pop()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-end">
+                  {r.status === 'RESERVED' && (
+                    <button onClick={() => handleAction(r.id, 'checkin')} className="btn btn-primary w-full md:w-auto px-8 shadow-md">
+                      Check In
+                    </button>
+                  )}
+                  {r.status === 'CHECKED_IN' && (
+                    <button onClick={() => handleAction(r.id, 'checkout')} className="bg-forest text-white font-semibold py-3 px-8 rounded-full w-full md:w-auto hover:bg-charcoal transition-colors shadow-md">
+                      Check Out
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            ))
+          )}
+        </div>
+      </motion.section>
+    </motion.div>
   );
 }
