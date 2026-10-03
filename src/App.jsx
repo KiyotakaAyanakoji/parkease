@@ -13,6 +13,7 @@ import MyBookings from './screens/MyBookings';
 import OperatorDashboard from './screens/OperatorDashboard';
 import OperatorFacilities from './screens/OperatorFacilities';
 import OperatorActivityLogs from './screens/OperatorActivityLogs';
+import OperatorPricing from './screens/OperatorPricing';
 import AdminDashboard from './screens/AdminDashboard';
 import AdminFacilities from './screens/AdminFacilities';
 import AdminSlots from './screens/AdminSlots';
@@ -37,6 +38,7 @@ const ScreenManager = () => {
       case 'OperatorDashboard': return <OperatorDashboard />;
       case 'OperatorFacilities': return <OperatorFacilities />;
       case 'OperatorActivityLogs': return <OperatorActivityLogs />;
+      case 'OperatorPricing': return <OperatorPricing />;
       case 'AdminDashboard': return <AdminDashboard />;
       case 'AdminFacilities': return <AdminFacilities />;
       case 'AdminSlots': return <AdminSlots />;
@@ -151,6 +153,13 @@ const ScreenManager = () => {
                 style={{justifyContent: 'flex-start'}}
               >
                 My Facilities
+              </button>
+              <button 
+                onClick={() => navigate('OperatorPricing')}
+                className={`btn ${currentScreen === 'OperatorPricing' ? 'btn-primary' : 'btn-ghost text-white'}`}
+                style={{justifyContent: 'flex-start'}}
+              >
+                Pricing Rules
               </button>
               <button 
                 onClick={() => navigate('OperatorActivityLogs')}

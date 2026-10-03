@@ -238,4 +238,85 @@ router.get('/activity', async (req, res) => {
   }
 });
 
+// --- PRICING ---
+router.get('/pricing', async (req, res) => {
+  try {
+    const operatorId = req.session.user.id;
+    const [assignments] = await pool.query('SELECT facility_id FROM operator_assignments WHERE operator_user_id = ? AND status = "ACTIVE"', [operatorId]);
+    if (assignments.length === 0) return res.json([]);
+    
+    const facilityIds = assignments.map(a => a.facility_id);
+    
+    const [pricings] = await pool.query(`
+      SELECT fp.*, f.name as facility_name
+      FROM facility_pricing fp
+      JOIN facilities f ON fp.facility_id = f.id
+      WHERE fp.facility_id IN (?)
+      ORDER BY f.name ASC
+    `, [facilityIds]);
+    
+    res.json(pricings);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error fetching pricing configuration' });
+  }
+});
+
+router.put('/facilities/:facility_id/pricing', async (req, res) => {
+  try {
+    const operatorId = req.session.user.id;
+    const { facility_id } = req.params;
+    
+    const isAssigned = await checkAssignment(operatorId, facility_id);
+    if (!isAssigned) {
+      return res.status(403).json({ message: 'Not authorized for this facility' });
+    }
+    
+    const {
+      base_hourly_rate,
+      peak_enabled,
+      peak_start_time,
+      peak_end_time,
+      peak_multiplier,
+      weekend_enabled,
+      weekend_multiplier
+    } = req.body;
+
+    if (base_hourly_rate < 0 || peak_multiplier <= 0 || weekend_multiplier <= 0) {
+      return res.status(400).json({ message: 'Rates and multipliers must be strictly positive' });
+    }
+
+    if (peak_enabled && peak_start_time === peak_end_time) {
+      return res.status(400).json({ message: 'Peak start and end times must differ' });
+    }
+
+    await pool.query(`
+      UPDATE facility_pricing
+      SET 
+        base_hourly_rate = ?,
+        peak_enabled = ?,
+        peak_start_time = ?,
+        peak_end_time = ?,
+        peak_multiplier = ?,
+        weekend_enabled = ?,
+        weekend_multiplier = ?
+      WHERE facility_id = ?
+    `, [
+      base_hourly_rate,
+      peak_enabled,
+      peak_start_time || '00:00:00',
+      peak_end_time || '00:00:00',
+      peak_multiplier,
+      weekend_enabled,
+      weekend_multiplier,
+      facility_id
+    ]);
+
+    res.json({ message: 'Pricing configuration updated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error updating pricing configuration' });
+  }
+});
+
 export default router;

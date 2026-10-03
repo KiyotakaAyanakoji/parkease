@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const AdminPricing = () => {
+const OperatorPricing = () => {
   const [pricings, setPricings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -9,7 +9,7 @@ const AdminPricing = () => {
 
   const fetchPricings = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/admin/pricing`, { 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/operator/pricing`, { 
         credentials: 'include' 
       });
       if (!res.ok) {
@@ -38,7 +38,7 @@ const AdminPricing = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/admin/pricing/${selectedPricing.facility_id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/operator/facilities/${selectedPricing.facility_id}/pricing`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -68,9 +68,6 @@ const AdminPricing = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Pricing Management</h1>
           <p className="text-gray-600">Configure base rates and dynamic multipliers for facilities.</p>
-          <div className="mt-2 p-3 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-200">
-            <strong>Note:</strong> Normal facility pricing is managed by the assigned Operator. Use this screen only for platform-wide administrative overrides.
-          </div>
         </div>
       </div>
 
@@ -264,4 +261,4 @@ const AdminPricing = () => {
   );
 };
 
-export default AdminPricing;
+export default OperatorPricing;
