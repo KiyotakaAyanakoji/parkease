@@ -120,7 +120,7 @@ export default function DriverDashboard() {
                 <div className="flex items-center gap-6 md:border-l md:border-border md:pl-6">
                   <div className="flex flex-col">
                     <span className="text-3xl font-bold text-primary tracking-tight">
-                      {fac.total_slots || 0}
+                      {fac.available_slots || 0}
                     </span>
                     <span className="text-xs font-semibold uppercase text-muted tracking-wide">Spaces Open</span>
                   </div>

@@ -11,7 +11,16 @@ router.use(requireRole(['DRIVER']));
 // 1. Get Active Facilities
 router.get('/facilities', async (req, res) => {
   try {
-    const [facilities] = await pool.query('SELECT * FROM facilities WHERE status = "ACTIVE" ORDER BY name ASC');
+    const query = `
+      SELECT f.*, 
+             COUNT(CASE WHEN ps.status = 'AVAILABLE' THEN 1 END) as available_slots
+      FROM facilities f
+      LEFT JOIN parking_slots ps ON f.id = ps.facility_id
+      WHERE f.status = "ACTIVE"
+      GROUP BY f.id
+      ORDER BY f.name ASC
+    `;
+    const [facilities] = await pool.query(query);
     res.json(facilities);
   } catch (error) {
     console.error(error);
@@ -23,7 +32,16 @@ router.get('/facilities', async (req, res) => {
 router.get('/facilities/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const [facility] = await pool.query('SELECT * FROM facilities WHERE id = ? AND status = "ACTIVE"', [id]);
+    const query = `
+      SELECT f.*, 
+             COUNT(CASE WHEN ps.status = 'AVAILABLE' THEN 1 END) as available_slots,
+             COUNT(ps.id) as total_slots
+      FROM facilities f
+      LEFT JOIN parking_slots ps ON f.id = ps.facility_id
+      WHERE f.id = ? AND f.status = "ACTIVE"
+      GROUP BY f.id
+    `;
+    const [facility] = await pool.query(query, [id]);
     if (facility.length === 0) {
       return res.status(404).json({ message: 'Facility not found or inactive' });
     }

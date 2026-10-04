@@ -164,3 +164,52 @@ h4 { font-size: 1.5rem; }
   border-color: var(--color-green);
   box-shadow: 0 0 0 3px rgba(36, 159, 104, 0.2);
 }
+
+/* Slots Layout */
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 0.75rem;
+}
+.slot {
+  aspect-ratio: 2/3;
+  border: 1px solid var(--color-muted); /* Fallback */
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.slot.available {
+  background-color: var(--color-white);
+  color: var(--color-forest);
+  border-color: var(--color-muted);
+}
+.slot.available:hover {
+  border-color: var(--color-green);
+  background-color: var(--color-surface);
+}
+.slot.selected {
+  background-color: var(--color-green);
+  border-color: var(--color-green);
+  color: var(--color-white);
+}
+.slot.occupied {
+  background-color: var(--color-surface);
+  border-color: var(--color-muted);
+  color: var(--color-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn var(--transition-normal);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
