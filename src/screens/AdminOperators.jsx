@@ -24,8 +24,8 @@ export default function AdminOperators() {
     try {
       const opts = { credentials: 'include' };
       const [resOps, resFacs] = await Promise.all([
-        fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/operators', opts),
-        fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/facilities', opts)
+        fetch(import.meta.env.VITE_API_BASE_URL + '/admin/operators', opts),
+        fetch(import.meta.env.VITE_API_BASE_URL + '/admin/facilities', opts)
       ]);
       
       if (resOps.ok) setOperators(await resOps.json());
@@ -49,7 +49,7 @@ export default function AdminOperators() {
     e.preventDefault();
     setFormError('');
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/operators', {
+      const res = await fetch(import.meta.env.VITE_API_BASE_URL + '/admin/operators', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -71,7 +71,7 @@ export default function AdminOperators() {
     if (!window.confirm(`Are you sure you want to ${newStatus.toLowerCase()} this operator?`)) return;
     
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/admin/operators/${id}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/operators/${id}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -113,7 +113,7 @@ export default function AdminOperators() {
     setEditLoading(true);
     setEditError('');
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/admin/operators/${editingOperator.id}/assignments`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/operators/${editingOperator.id}/assignments`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ facilities: editFacilities }),

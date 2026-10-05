@@ -18,8 +18,8 @@ export default function ParkingDetails() {
       try {
         const opts = { credentials: 'include' };
         const [facRes, slotsRes] = await Promise.all([
-          fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/facilities/${facilityId}`, opts),
-          fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/facilities/${facilityId}/slots`, opts)
+          fetch(`${import.meta.env.VITE_API_BASE_URL}/driver/facilities/${facilityId}`, opts),
+          fetch(`${import.meta.env.VITE_API_BASE_URL}/driver/facilities/${facilityId}/slots`, opts)
         ]);
         
         if (!facRes.ok || !slotsRes.ok) throw new Error('Failed to fetch parking details');

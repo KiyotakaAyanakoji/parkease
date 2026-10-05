@@ -15,8 +15,8 @@ export default function OperatorDashboard() {
     try {
       const opts = { credentials: 'include' };
       const [resOverview, resRes] = await Promise.all([
-        fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/operator/overview', opts),
-        fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/operator/reservations', opts)
+        fetch(import.meta.env.VITE_API_BASE_URL + '/operator/overview', opts),
+        fetch(import.meta.env.VITE_API_BASE_URL + '/operator/reservations', opts)
       ]);
       
       if (resOverview.ok && resRes.ok) {
@@ -48,7 +48,7 @@ export default function OperatorDashboard() {
 
   const handleAction = async (bookingId, action) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/operator/${action}/${bookingId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/operator/${action}/${bookingId}`, {
         method: 'POST',
         credentials: 'include'
       });

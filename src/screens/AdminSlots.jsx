@@ -18,8 +18,8 @@ export default function AdminSlots() {
     try {
       const opts = { credentials: 'include' };
       const [resSlots, resFacs] = await Promise.all([
-        fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/slots', opts),
-        fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/facilities', opts)
+        fetch(import.meta.env.VITE_API_BASE_URL + '/admin/slots', opts),
+        fetch(import.meta.env.VITE_API_BASE_URL + '/admin/facilities', opts)
       ]);
       
       if (resSlots.ok && resFacs.ok) {
@@ -45,7 +45,7 @@ export default function AdminSlots() {
     e.preventDefault();
     setFormError('');
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/slots', {
+      const res = await fetch(import.meta.env.VITE_API_BASE_URL + '/admin/slots', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

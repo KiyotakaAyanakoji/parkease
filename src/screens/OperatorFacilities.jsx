@@ -10,7 +10,7 @@ export default function OperatorFacilities() {
 
   const fetchFacilities = async () => {
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/operator/overview', {
+      const res = await fetch(import.meta.env.VITE_API_BASE_URL + '/operator/overview', {
         credentials: 'include'
       });
       if (res.ok) {

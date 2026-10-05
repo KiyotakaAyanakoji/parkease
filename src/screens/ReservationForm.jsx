@@ -34,7 +34,7 @@ export default function ReservationForm() {
       const mysqlArrival = expectedArrival.toISOString().slice(0, 19).replace('T', ' ');
 
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/estimate`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/driver/estimate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -79,7 +79,7 @@ export default function ReservationForm() {
     const mysqlArrival = expectedArrival.toISOString().slice(0, 19).replace('T', ' ');
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/bookings`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/driver/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

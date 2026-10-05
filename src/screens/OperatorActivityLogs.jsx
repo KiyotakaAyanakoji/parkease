@@ -22,7 +22,7 @@ export default function OperatorActivityLogs() {
     setLoading(true);
     try {
       const qs = `?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}`;
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + `/operator/activity${qs}`, {
+      const res = await fetch(import.meta.env.VITE_API_BASE_URL + `/operator/activity${qs}`, {
         credentials: 'include'
       });
       if (res.ok) {
@@ -48,7 +48,7 @@ export default function OperatorActivityLogs() {
 
   const handleExport = () => {
     const qs = `?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}&format=csv`;
-    window.open((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + `/operator/activity${qs}`, '_blank');
+    window.open(import.meta.env.VITE_API_BASE_URL + `/operator/activity${qs}`, '_blank');
   };
 
   if (loading && logs.length === 0) return <div className="p-8 text-forest">Loading Activity...</div>;

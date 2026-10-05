@@ -16,7 +16,7 @@ export default function AdminDashboard() {
 
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/analytics', {
+        const res = await fetch(import.meta.env.VITE_API_BASE_URL + '/admin/analytics', {
           credentials: 'include'
         });
         

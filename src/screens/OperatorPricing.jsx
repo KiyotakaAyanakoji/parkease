@@ -9,7 +9,7 @@ const OperatorPricing = () => {
 
   const fetchPricings = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/operator/pricing`, { 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/operator/pricing`, { 
         credentials: 'include' 
       });
       if (!res.ok) {
@@ -38,7 +38,7 @@ const OperatorPricing = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/operator/facilities/${selectedPricing.facility_id}/pricing`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/operator/facilities/${selectedPricing.facility_id}/pricing`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

@@ -9,7 +9,7 @@ const AdminPricing = () => {
 
   const fetchPricings = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/admin/pricing`, { 
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/pricing`, { 
         credentials: 'include' 
       });
       if (!res.ok) {
@@ -38,7 +38,7 @@ const AdminPricing = () => {
   const handleSave = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/admin/pricing/${selectedPricing.facility_id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/admin/pricing/${selectedPricing.facility_id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

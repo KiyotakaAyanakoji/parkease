@@ -29,7 +29,7 @@ export default function AdminFacilities() {
 
   const fetchFacilities = async () => {
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/facilities', {
+      const res = await fetch(import.meta.env.VITE_API_BASE_URL + '/admin/facilities', {
         credentials: 'include'
       });
       if (res.ok) {
@@ -54,7 +54,7 @@ export default function AdminFacilities() {
     setPerfLoading(true);
     try {
       const qs = `?start_date=${dateRange.start_date}&end_date=${dateRange.end_date}`;
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + `/admin/facilities/${facilityId}/performance${qs}`, {
+      const res = await fetch(import.meta.env.VITE_API_BASE_URL + `/admin/facilities/${facilityId}/performance${qs}`, {
         credentials: 'include'
       });
       if (res.ok) {
@@ -77,7 +77,7 @@ export default function AdminFacilities() {
     e.preventDefault();
     setFormError('');
     try {
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/admin/facilities', {
+      const res = await fetch(import.meta.env.VITE_API_BASE_URL + '/admin/facilities', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

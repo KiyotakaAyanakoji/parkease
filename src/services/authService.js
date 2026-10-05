@@ -2,7 +2,7 @@
 // API integration structure for backend authentication.
 // Currently points to backend endpoints that need to be implemented.
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/auth';
+const API_BASE = `${import.meta.env.VITE_API_BASE_URL}/auth`;
 
 export const authService = {
   /**

@@ -13,7 +13,7 @@ export default function MyBookings() {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/bookings`, {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/driver/bookings`, {
         credentials: 'include'
       });
       if (res.ok) {
@@ -44,7 +44,7 @@ export default function MyBookings() {
   const handleCancel = async (bookingId) => {
     if (window.confirm('Are you sure you want to cancel this reservation?')) {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'}/driver/bookings/${bookingId}/cancel`, {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/driver/bookings/${bookingId}/cancel`, {
           method: 'POST',
           credentials: 'include'
         });

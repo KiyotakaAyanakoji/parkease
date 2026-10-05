@@ -17,8 +17,8 @@ export default function DriverDashboard() {
       try {
         const opts = { credentials: 'include' };
         const [facRes, bookRes] = await Promise.all([
-          fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/driver/facilities', opts),
-          fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api') + '/driver/bookings', opts)
+          fetch(import.meta.env.VITE_API_BASE_URL + '/driver/facilities', opts),
+          fetch(import.meta.env.VITE_API_BASE_URL + '/driver/bookings', opts)
         ]);
 
         if (facRes.ok) setFacilities(await facRes.json());
