@@ -58,7 +58,7 @@ export default function Login() {
         {/* Form Side */}
         <div className="auth-form-side">
           <div className="auth-brand" onClick={() => navigate('LandingPage')}>
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white" style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+            <div className="w-8 h-8 rounded-full bg-green flex items-center justify-center text-white" style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'var(--color-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
               <Car size={16} />
             </div>
             <span>ParkEase</span>
@@ -148,13 +148,13 @@ export default function Login() {
 
         {/* Visual Side */}
         <div className="auth-visual-side hidden md:flex" style={{ display: 'none' }}>
-          <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '400px', height: '400px', background: 'radial-gradient(circle, var(--color-lime) 0%, transparent 70%)', opacity: 0.4, borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
-          <div style={{ position: 'absolute', bottom: '-10%', left: '-10%', width: '300px', height: '300px', background: 'radial-gradient(circle, var(--color-primary) 0%, transparent 70%)', opacity: 0.2, borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
+          <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: '400px', height: '400px', background: 'radial-gradient(circle, var(--color-bright) 0%, transparent 70%)', opacity: 0.4, borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
+          <div style={{ position: 'absolute', bottom: '-10%', left: '-10%', width: '300px', height: '300px', background: 'radial-gradient(circle, var(--color-green) 0%, transparent 70%)', opacity: 0.2, borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
           
           <div style={{ width: '100%', maxWidth: 360, zIndex: 10 }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', padding: 24, borderRadius: 20, border: '1px solid var(--color-white)', boxShadow: '0 20px 40px -10px rgba(39, 155, 105, 0.2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, borderBottom: '1px solid var(--color-border)', paddingBottom: 16 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'var(--color-sage)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-primary)' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', padding: 24, borderRadius: 20, border: '1px solid rgba(36, 159, 104, 0.2)', boxShadow: '0 20px 40px -10px rgba(16, 36, 27, 0.1)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, borderBottom: '1px solid var(--color-muted)', paddingBottom: 16 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-green)' }}>
                   <Car size={20} />
                 </div>
                 <div>
@@ -164,8 +164,8 @@ export default function Login() {
               </div>
               
               <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
-                <div style={{ width: '100%', height: 8, borderRadius: 4, backgroundColor: 'var(--color-offwhite)' }}>
-                  <div style={{ width: '60%', height: '100%', borderRadius: 4, backgroundColor: 'var(--color-primary)' }}></div>
+                <div style={{ width: '100%', height: 8, borderRadius: 4, backgroundColor: 'var(--color-surface)' }}>
+                  <div style={{ width: '60%', height: '100%', borderRadius: 4, backgroundColor: 'var(--color-green)' }}></div>
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--color-muted)', textAlign: 'right' }}>ETA: 12 mins</div>
               </div>

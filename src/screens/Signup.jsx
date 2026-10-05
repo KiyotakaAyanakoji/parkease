@@ -74,7 +74,7 @@ export default function Signup() {
         {/* Form Side */}
         <div className="auth-form-side">
           <div className="auth-brand" onClick={() => navigate('LandingPage')}>
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white" style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+            <div className="w-8 h-8 rounded-full bg-green flex items-center justify-center text-white" style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: 'var(--color-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
               <Car size={16} />
             </div>
             <span>ParkEase</span>
@@ -172,7 +172,7 @@ export default function Signup() {
                 id="terms" 
                 checked={agreeTerms}
                 onChange={(e) => setAgreeTerms(e.target.checked)}
-                style={{ marginTop: 4, width: 16, height: 16, accentColor: 'var(--color-primary)' }}
+                style={{ marginTop: 4, width: 16, height: 16, accentColor: 'var(--color-green)' }}
               />
               <label htmlFor="terms" style={{ fontSize: 14, color: 'var(--color-muted)', lineHeight: 1.5 }}>
                 I agree to the <a href="#" className="auth-link" onClick={(e) => e.preventDefault()}>Terms of Service</a> and <a href="#" className="auth-link" onClick={(e) => e.preventDefault()}>Privacy Policy</a>.
@@ -199,8 +199,8 @@ export default function Signup() {
 
         {/* Visual Side */}
         <div className="auth-visual-side signup-visual hidden md:flex" style={{ display: 'none' }}>
-          <div style={{ position: 'absolute', top: '10%', right: '-20%', width: '400px', height: '400px', background: 'radial-gradient(circle, var(--color-emerald) 0%, transparent 70%)', opacity: 0.3, borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
-          <div style={{ position: 'absolute', bottom: '-20%', left: '-10%', width: '300px', height: '300px', background: 'radial-gradient(circle, var(--color-lime) 0%, transparent 70%)', opacity: 0.15, borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
+          <div style={{ position: 'absolute', top: '10%', right: '-20%', width: '400px', height: '400px', background: 'radial-gradient(circle, var(--color-green) 0%, transparent 70%)', opacity: 0.3, borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
+          <div style={{ position: 'absolute', bottom: '-20%', left: '-10%', width: '300px', height: '300px', background: 'radial-gradient(circle, var(--color-bright) 0%, transparent 70%)', opacity: 0.15, borderRadius: '50%', filter: 'blur(40px)', pointerEvents: 'none' }}></div>
           
           <div style={{ width: '100%', maxWidth: 360, zIndex: 10 }}>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -210,7 +210,7 @@ export default function Signup() {
                 { title: 'Flexible check-in', desc: 'Running late? Grace periods included.' }
               ].map((feature, i) => (
                 <li key={i} style={{ display: 'flex', gap: 16 }}>
-                  <div style={{ color: 'var(--color-lime)', marginTop: 2 }}>
+                  <div style={{ color: 'var(--color-bright)', marginTop: 2 }}>
                     <CheckCircle2 size={24} />
                   </div>
                   <div>
