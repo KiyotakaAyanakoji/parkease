@@ -14,6 +14,10 @@ router.post('/register', async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
 
+    if (!normalizedEmail.endsWith('@parkease.com')) {
+      return res.status(400).json({ message: 'Only @parkease.com email addresses are allowed.' });
+    }
+
     // Check if user exists
     const [existingUsers] = await pool.query('SELECT id FROM users WHERE email = ?', [normalizedEmail]);
     if (existingUsers.length > 0) {
@@ -54,6 +58,10 @@ router.post('/login', async (req, res) => {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+
+    if (!normalizedEmail.endsWith('@parkease.com')) {
+      return res.status(400).json({ message: 'Only @parkease.com email addresses are allowed.' });
+    }
 
     const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [normalizedEmail]);
     if (users.length === 0) {

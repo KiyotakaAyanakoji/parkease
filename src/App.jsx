@@ -10,6 +10,7 @@ import ParkingDetails from './screens/ParkingDetails';
 import ReservationForm from './screens/ReservationForm';
 import BookingConfirmation from './screens/BookingConfirmation';
 import MyBookings from './screens/MyBookings';
+import MyVehicles from './screens/MyVehicles';
 
 import OperatorDashboard from './screens/OperatorDashboard';
 import OperatorFacilities from './screens/OperatorFacilities';
@@ -23,7 +24,7 @@ import AdminPricing from './screens/AdminPricing';
 import LandingPage from './screens/LandingPage';
 
 const ScreenManager = () => {
-  const { currentScreen, role, setRole, navigate, authLoading, user } = useAppContext();
+  const { currentScreen, role, setRole, navigate, authLoading, user, setUser } = useAppContext();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const renderScreen = () => {
@@ -36,6 +37,7 @@ const ScreenManager = () => {
       case 'ReservationForm': return <ReservationForm />;
       case 'BookingConfirmation': return <BookingConfirmation />;
       case 'MyBookings': return <MyBookings />;
+      case 'MyVehicles': return <MyVehicles />;
       
       case 'OperatorDashboard': return <OperatorDashboard />;
       case 'OperatorFacilities': return <OperatorFacilities />;
@@ -58,6 +60,7 @@ const ScreenManager = () => {
       console.error(e);
     }
     setRole(null);
+    setUser(null);
     navigate('LandingPage');
   };
 
@@ -100,6 +103,12 @@ const ScreenManager = () => {
               >
                 My Passes
               </button>
+              <button 
+                onClick={() => navigate('MyVehicles')}
+                className={`font-medium transition-colors ${currentScreen === 'MyVehicles' ? 'text-primary border-b-2 border-primary pb-1' : 'text-muted hover:text-forest'}`}
+              >
+                My Vehicles
+              </button>
             </nav>
             
             <div className="flex items-center gap-4">
@@ -127,6 +136,7 @@ const ScreenManager = () => {
               <div className="flex flex-col p-4 gap-4">
                 <button onClick={() => { navigate('DriverDashboard'); setMobileMenuOpen(false); }} className="text-left font-semibold text-lg py-2 border-b border-border">Find Parking</button>
                 <button onClick={() => { navigate('MyBookings'); setMobileMenuOpen(false); }} className="text-left font-semibold text-lg py-2 border-b border-border">My Passes</button>
+                <button onClick={() => { navigate('MyVehicles'); setMobileMenuOpen(false); }} className="text-left font-semibold text-lg py-2 border-b border-border">My Vehicles</button>
                 <button onClick={handleLogout} className="text-left font-semibold text-lg py-2 text-red-500">Sign Out</button>
               </div>
             </motion.div>

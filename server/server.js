@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import operatorRoutes from './routes/operator.js';
 import driverRoutes from './routes/driver.js';
+import vehicleRoutes from './routes/vehicles.js';
 import { initDb } from './db.js';
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/operator', operatorRoutes);
 app.use('/api/driver', driverRoutes);
+app.use('/api/vehicles', vehicleRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'ParkEase API is running' });

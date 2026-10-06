@@ -101,9 +101,9 @@ router.post('/bookings', async (req, res) => {
   const connection = await pool.getConnection();
   try {
     const userId = req.session.user.id;
-    const { facility_id, slot_id, vehicle_reg, expected_arrival, expected_duration_hours } = req.body;
+    const { facility_id, slot_id, vehicle_id, expected_arrival, expected_duration_hours } = req.body;
 
-    if (!facility_id || !slot_id || !vehicle_reg || !expected_arrival || !expected_duration_hours) {
+    if (!facility_id || !slot_id || !vehicle_id || !expected_arrival || !expected_duration_hours) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
@@ -139,14 +139,22 @@ router.post('/bookings', async (req, res) => {
     // Generate Booking ID (e.g. BKG-XXXXXX)
     const bookingId = `BKG-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
+    // Verify vehicle ownership
+    const [vehicles] = await connection.query('SELECT registration_number FROM vehicles WHERE id = ? AND user_id = ? AND status = ?', [vehicle_id, userId, 'ACTIVE']);
+    if (vehicles.length === 0) {
+      await connection.rollback();
+      return res.status(403).json({ message: 'Invalid or unauthorized vehicle' });
+    }
+    const vehicle_reg = vehicles[0].registration_number;
+
     // Update slot status to RESERVED
     await connection.query('UPDATE parking_slots SET status = "RESERVED" WHERE id = ?', [slot_id]);
 
     // Insert booking
     await connection.query(`
-      INSERT INTO bookings (id, user_id, facility_id, slot_id, vehicle_reg, expected_arrival, expected_duration_hours, status, total_price, pricing_rules_applied)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'RESERVED', ?, ?)
-    `, [bookingId, userId, facility_id, slot_id, vehicle_reg, expected_arrival, expected_duration_hours, total_price, pricing_rules_applied]);
+      INSERT INTO bookings (id, user_id, facility_id, slot_id, vehicle_id, vehicle_reg, expected_arrival, expected_duration_hours, status, total_price, pricing_rules_applied)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RESERVED', ?, ?)
+    `, [bookingId, userId, facility_id, slot_id, vehicle_id, vehicle_reg, expected_arrival, expected_duration_hours, total_price, pricing_rules_applied]);
 
     await connection.commit();
     res.status(201).json({ message: 'Booking successful', bookingId, confirmedPrice: total_price });
@@ -164,10 +172,12 @@ router.get('/bookings', async (req, res) => {
   try {
     const userId = req.session.user.id;
     const [bookings] = await pool.query(`
-      SELECT b.*, f.name as facility_name, f.address, ps.slot_code 
+      SELECT b.*, f.name as facility_name, f.address, ps.slot_code,
+             v.model as vehicle_model, v.color as vehicle_color, v.vehicle_type
       FROM bookings b
       JOIN facilities f ON b.facility_id = f.id
       JOIN parking_slots ps ON b.slot_id = ps.id
+      LEFT JOIN vehicles v ON b.vehicle_id = v.id
       WHERE b.user_id = ?
       ORDER BY b.created_at DESC
     `, [userId]);
@@ -184,10 +194,12 @@ router.get('/bookings/:id', async (req, res) => {
     const userId = req.session.user.id;
     const { id } = req.params;
     const [bookings] = await pool.query(`
-      SELECT b.*, f.name as facility_name, f.address, ps.slot_code 
+      SELECT b.*, f.name as facility_name, f.address, ps.slot_code,
+             v.model as vehicle_model, v.color as vehicle_color, v.vehicle_type
       FROM bookings b
       JOIN facilities f ON b.facility_id = f.id
       JOIN parking_slots ps ON b.slot_id = ps.id
+      LEFT JOIN vehicles v ON b.vehicle_id = v.id
       WHERE b.user_id = ? AND b.id = ?
     `, [userId, id]);
 

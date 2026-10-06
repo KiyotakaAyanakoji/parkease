@@ -1,16 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { ArrowLeft, Clock, Info } from 'lucide-react';
+import { ArrowLeft, Clock, Info, Plus } from 'lucide-react';
+import { vehicleService } from '../services/vehicleService';
 
 export default function ReservationForm() {
   const { screenProps, navigate } = useAppContext();
   const { lot, slot } = screenProps;
   
-  const [vehicle, setVehicle] = useState('MH-01-AB-1234');
+  const [vehicleId, setVehicleId] = useState('');
+  const [vehicles, setVehicles] = useState([]);
   const [duration, setDuration] = useState(2); // hours
   const [time, setTime] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    vehicleService.getVehicles().then(data => {
+      setVehicles(data);
+      if (data.length > 0) setVehicleId(data[0].id.toString());
+    }).catch(err => {
+      console.error(err);
+      setError('Failed to load vehicles');
+    });
+  }, []);
   
   // Estimate state
   const [estimate, setEstimate] = useState(null);
@@ -68,7 +80,10 @@ export default function ReservationForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!time || !estimate) return;
+    if (!time || !estimate || !vehicleId) {
+      setError('Please select a vehicle and time.');
+      return;
+    }
     
     setLoading(true);
     setError('');
@@ -86,7 +101,7 @@ export default function ReservationForm() {
         body: JSON.stringify({
           facility_id: lot.id,
           slot_id: slot.id,
-          vehicle_reg: vehicle,
+          vehicle_id: parseInt(vehicleId, 10),
           expected_arrival: mysqlArrival,
           expected_duration_hours: parseInt(duration, 10)
         })
@@ -103,7 +118,7 @@ export default function ReservationForm() {
         id: data.bookingId,
         facility_name: lot.name,
         slot_code: slot.slot_code,
-        vehicle_reg: vehicle,
+        vehicle_reg: vehicles.find(v => v.id.toString() === vehicleId)?.registration_number || '',
         expected_arrival: mysqlArrival,
         expected_duration_hours: duration,
         status: 'RESERVED',
@@ -136,10 +151,29 @@ export default function ReservationForm() {
           <form className="card" onSubmit={handleSubmit}>
             <div className="form-group mb-6">
               <label className="form-label font-medium mb-2 block">Vehicle Registration</label>
-              <select className="form-select w-full" value={vehicle} onChange={(e) => setVehicle(e.target.value)}>
-                <option value="MH-01-AB-1234">MH-01-AB-1234 (Honda City)</option>
-                <option value="MH-02-XY-9876">MH-02-XY-9876 (Hyundai Creta)</option>
-              </select>
+              {vehicles.length === 0 ? (
+                <div className="flex flex-col gap-3">
+                  <div className="p-4 bg-orange-50 text-orange-700 rounded-xl border border-orange-200">
+                    You need to add a vehicle before booking.
+                  </div>
+                  <button type="button" onClick={() => navigate('MyVehicles')} className="btn btn-primary flex items-center justify-center gap-2">
+                    <Plus size={18} /> Add New Vehicle
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  <select className="form-select w-full" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+                    {vehicles.map(v => (
+                      <option key={v.id} value={v.id}>
+                        {v.vehicle_type === 'CAR' ? '🚗' : '🏍️'} {v.model} - {v.registration_number} ({v.color})
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => navigate('MyVehicles')} className="text-sm text-primary font-medium flex items-center gap-1 hover:underline">
+                    <Plus size={14} /> Add another vehicle
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-6 form-group mb-6">
@@ -176,7 +210,7 @@ export default function ReservationForm() {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full" disabled={!time || loading || !estimate || loadingEstimate}>
+            <button type="submit" className="btn btn-primary w-full" disabled={!time || loading || !estimate || loadingEstimate || !vehicleId}>
               {loading ? 'Processing...' : 'Confirm Reservation'}
             </button>
           </form>

@@ -6,7 +6,7 @@ import { authService } from '../services/authService';
 import './Auth.css';
 
 export default function Login() {
-  const { navigate, setRole } = useAppContext();
+  const { navigate, setRole, setUser } = useAppContext();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -21,6 +21,12 @@ export default function Login() {
       return;
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!normalizedEmail.endsWith('@parkease.com')) {
+      setError('Only @parkease.com email addresses are allowed.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -28,6 +34,7 @@ export default function Login() {
       const result = await authService.login(email, password);
       // Success - redirect based on role
       const userRole = result.user.role;
+      setUser(result.user);
       setRole(userRole);
       let targetScreen = 'DriverDashboard';
       if (userRole === 'ADMIN' || userRole === 'admin') targetScreen = 'AdminDashboard';

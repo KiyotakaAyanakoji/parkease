@@ -34,6 +34,12 @@ export default function Signup() {
       return;
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!normalizedEmail.endsWith('@parkease.com')) {
+      setError('Only @parkease.com email addresses are allowed.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
       return;
